@@ -25,6 +25,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         resources.qrc
         config_dialog.ui
+        cover_downloader_dialog.ui
 
     )
 # Define target properties for Android with Qt 6 as:

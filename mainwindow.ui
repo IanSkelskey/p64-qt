@@ -231,6 +231,9 @@
    </property>
   </action>
   <action name="actionFullscreen">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::ZoomFitBest"/>
    </property>
@@ -239,16 +242,25 @@
    </property>
   </action>
   <action name="actionAlways_on_top">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Always on top</string>
    </property>
   </action>
   <action name="actionGraphics_Settings">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Graphics Settings</string>
    </property>
   </action>
   <action name="actionAudio_Settings">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="icon">
     <iconset theme="QIcon::ThemeIcon::AudioCard"/>
    </property>
@@ -257,11 +269,17 @@
    </property>
   </action>
   <action name="actionRSP_Settings">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>RSP Settings</string>
    </property>
   </action>
   <action name="actionInput_Settings">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Input Settings</string>
    </property>
