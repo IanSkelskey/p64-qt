@@ -24,35 +24,10 @@
     <normaloff>:/assets/icons/pj64.ico</normaloff>:/assets/icons/pj64.ico</iconset>
   </property>
   <property name="statusTip">
-   <string>Running...</string>
+   <string/>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QTableWidget" name="tableWidget">
-      <column>
-       <property name="text">
-        <string>Name</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Cartridge ID</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Country</string>
-       </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Internal Name</string>
-       </property>
-      </column>
-     </widget>
-    </item>
-   </layout>
+   <layout class="QVBoxLayout" name="verticalLayout"/>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -258,11 +233,17 @@
    </property>
   </action>
   <action name="actionROM_List">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>ROM List</string>
    </property>
   </action>
   <action name="actionROM_Grid">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>ROM Grid</string>
    </property>
