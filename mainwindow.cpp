@@ -4,10 +4,10 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    setWindowTitle("Project64 - Qt Interface");
 
     // Connect the Configuration menu action to the slot
     connect(ui->actionConfiguration, &QAction::triggered, this, &MainWindow::openConfigurationDialog);
+    connect(ui->actionCover_Downloader, &QAction::triggered, this, &MainWindow::openCoverDownloader);
 }
 
 MainWindow::~MainWindow() {
@@ -16,9 +16,18 @@ MainWindow::~MainWindow() {
 
 void MainWindow::openConfigurationDialog() {
     QDialog configDialog(this);
-    Ui::Dialog configUi;
+    Ui::ConfigDialog configUi;
     configUi.setupUi(&configDialog);
 
     // Show the dialog
     configDialog.exec();
+}
+
+void MainWindow::openCoverDownloader() {
+    QDialog coverDialog(this);
+    Ui::CoverDownloaderDialog coverUi;
+    coverUi.setupUi(&coverDialog);
+
+    // Show the dialog
+    coverDialog.exec();
 }

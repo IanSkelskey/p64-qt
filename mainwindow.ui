@@ -10,10 +10,50 @@
     <height>600</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>MainWindow</string>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
+  <property name="windowTitle">
+   <string>Project64</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="resources.qrc">
+    <normaloff>:/assets/icons/pj64.ico</normaloff>:/assets/icons/pj64.ico</iconset>
+  </property>
+  <property name="statusTip">
+   <string>Running...</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QTableWidget" name="tableWidget">
+      <column>
+       <property name="text">
+        <string>Name</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Cartridge ID</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Country</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Internal Name</string>
+       </property>
+      </column>
+     </widget>
+    </item>
+   </layout>
+  </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
@@ -37,11 +77,17 @@
      <property name="title">
       <string>Recent ROM</string>
      </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::DocumentOpenRecent"/>
+     </property>
      <addaction name="action_Recent_ROMs"/>
     </widget>
     <widget class="QMenu" name="menuRecent_ROM_Directories">
      <property name="title">
       <string>Recent ROM Directories</string>
+     </property>
+     <property name="icon">
+      <iconset theme="QIcon::ThemeIcon::DocumentOpenRecent"/>
      </property>
      <addaction name="action_Recent_ROM_Directories"/>
     </widget>
@@ -103,11 +149,17 @@
     <property name="title">
      <string>Tools</string>
     </property>
+    <addaction name="actionCover_Downloader"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionSupport_Project64"/>
+    <addaction name="actionDiscord"/>
+    <addaction name="actionWebsite"/>
+    <addaction name="separator"/>
+    <addaction name="actionAbout_Project64"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuOptions"/>
@@ -300,7 +352,37 @@
     <string>Configuration</string>
    </property>
   </action>
+  <action name="actionCover_Downloader">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::GoDown"/>
+   </property>
+   <property name="text">
+    <string>Cover Downloader</string>
+   </property>
+  </action>
+  <action name="actionSupport_Project64">
+   <property name="text">
+    <string>Support Project64</string>
+   </property>
+  </action>
+  <action name="actionDiscord">
+   <property name="text">
+    <string>Discord</string>
+   </property>
+  </action>
+  <action name="actionWebsite">
+   <property name="text">
+    <string>Website</string>
+   </property>
+  </action>
+  <action name="actionAbout_Project64">
+   <property name="text">
+    <string>About Project64</string>
+   </property>
+  </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
