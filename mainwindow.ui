@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <widget class="QMenu" name="menuLanguage">
+     <property name="title">
+      <string>Language</string>
+     </property>
+     <addaction name="action_Available_Languages"/>
+    </widget>
+    <widget class="QMenu" name="menuRecent_ROM">
+     <property name="title">
+      <string>Recent ROM</string>
+     </property>
+     <addaction name="action_Recent_ROMs"/>
+    </widget>
+    <widget class="QMenu" name="menuRecent_ROM_Directories">
+     <property name="title">
+      <string>Recent ROM Directories</string>
+     </property>
+     <addaction name="action_Recent_ROM_Directories"/>
+    </widget>
+    <addaction name="actionOpen_ROM"/>
+    <addaction name="actionOpem_Combo"/>
+    <addaction name="actionROM_Info"/>
+    <addaction name="separator"/>
+    <addaction name="actionStart_Emulation"/>
+    <addaction name="actionEnd_Emulation"/>
+    <addaction name="separator"/>
+    <addaction name="menuLanguage"/>
+    <addaction name="separator"/>
+    <addaction name="actionChoose_ROM_Directory"/>
+    <addaction name="actionRefresh_ROM_List"/>
+    <addaction name="separator"/>
+    <addaction name="menuRecent_ROM"/>
+    <addaction name="menuRecent_ROM_Directories"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>Options</string>
+    </property>
+    <addaction name="actionFullscreen"/>
+    <addaction name="actionAlways_on_top"/>
+    <addaction name="separator"/>
+    <addaction name="actionGraphics_Settings"/>
+    <addaction name="actionAudio_Settings"/>
+    <addaction name="actionRSP_Settings"/>
+    <addaction name="actionInput_Settings"/>
+    <addaction name="separator"/>
+    <addaction name="actionShow_CPU_Stats"/>
+    <addaction name="actionConfiguration"/>
+   </widget>
+   <widget class="QMenu" name="menuDebugger">
+    <property name="title">
+     <string>&amp;Debugger</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <widget class="QMenu" name="menuTheme">
+     <property name="title">
+      <string>Theme</string>
+     </property>
+     <addaction name="actionDark_Mode"/>
+     <addaction name="actionLight_Mode"/>
+     <addaction name="actionUse_System_Prefs"/>
+    </widget>
+    <addaction name="actionROM_List"/>
+    <addaction name="actionROM_Grid"/>
+    <addaction name="separator"/>
+    <addaction name="menuTheme"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuOptions"/>
+   <addaction name="menuDebugger"/>
+   <addaction name="menuView"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionOpen_ROM">
+   <property name="text">
+    <string>Open ROM</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionOpem_Combo">
+   <property name="text">
+    <string>Opem Combo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+O</string>
+   </property>
+  </action>
+  <action name="actionROM_Info">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>ROM Info...</string>
+   </property>
+  </action>
+  <action name="actionStart_Emulation">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
+   </property>
+   <property name="text">
+    <string>Start Emulation</string>
+   </property>
+   <property name="shortcut">
+    <string>F11</string>
+   </property>
+  </action>
+  <action name="actionEnd_Emulation">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MediaPlaybackStop"/>
+   </property>
+   <property name="text">
+    <string>End Emulation</string>
+   </property>
+  </action>
+  <action name="actionChoose_ROM_Directory">
+   <property name="text">
+    <string>Choose ROM Directory...</string>
+   </property>
+  </action>
+  <action name="actionRefresh_ROM_List">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::SyncSynchronizing"/>
+   </property>
+   <property name="text">
+    <string>Refresh ROM List</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::EditClear"/>
+   </property>
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="action_Available_Languages">
+   <property name="text">
+    <string>(Available Languages)</string>
+   </property>
+  </action>
+  <action name="action_Recent_ROMs">
+   <property name="text">
+    <string>(Recent ROMs)</string>
+   </property>
+  </action>
+  <action name="action_Recent_ROM_Directories">
+   <property name="text">
+    <string>(Recent ROM Directories)</string>
+   </property>
+  </action>
+  <action name="actionROM_List">
+   <property name="text">
+    <string>ROM List</string>
+   </property>
+  </action>
+  <action name="actionROM_Grid">
+   <property name="text">
+    <string>ROM Grid</string>
+   </property>
+  </action>
+  <action name="actionDark_Mode">
+   <property name="text">
+    <string>Dark Mode</string>
+   </property>
+  </action>
+  <action name="actionLight_Mode">
+   <property name="text">
+    <string>Light Mode</string>
+   </property>
+  </action>
+  <action name="actionUse_System_Prefs">
+   <property name="text">
+    <string>Use System Prefs</string>
+   </property>
+  </action>
+  <action name="actionFullscreen">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::ZoomFitBest"/>
+   </property>
+   <property name="text">
+    <string>Fullscreen</string>
+   </property>
+  </action>
+  <action name="actionAlways_on_top">
+   <property name="text">
+    <string>Always on top</string>
+   </property>
+  </action>
+  <action name="actionGraphics_Settings">
+   <property name="text">
+    <string>Graphics Settings</string>
+   </property>
+  </action>
+  <action name="actionAudio_Settings">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::AudioCard"/>
+   </property>
+   <property name="text">
+    <string>Audio Settings</string>
+   </property>
+  </action>
+  <action name="actionRSP_Settings">
+   <property name="text">
+    <string>RSP Settings</string>
+   </property>
+  </action>
+  <action name="actionInput_Settings">
+   <property name="text">
+    <string>Input Settings</string>
+   </property>
+  </action>
+  <action name="actionShow_CPU_Stats">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::Computer"/>
+   </property>
+   <property name="text">
+    <string>Show CPU Stats</string>
+   </property>
+  </action>
+  <action name="actionConfiguration">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::DocumentProperties"/>
+   </property>
+   <property name="text">
+    <string>Configuration</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
