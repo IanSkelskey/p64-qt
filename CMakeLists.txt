@@ -27,6 +27,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         config_dialog.ui
         cover_downloader_dialog.ui
         mainwindow.cpp
+        aboutdialog.h aboutdialog.cpp aboutdialog.ui
 
 
     )

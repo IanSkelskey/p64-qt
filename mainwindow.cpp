@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Connect the Configuration menu action to the slot
     connect(ui->actionConfiguration, &QAction::triggered, this, &MainWindow::openConfigurationDialog);
     connect(ui->actionCover_Downloader, &QAction::triggered, this, &MainWindow::openCoverDownloader);
+    connect(ui->actionAbout_Project64, &QAction::triggered, this, &MainWindow::openAboutDialog); // Connect the About menu action to the slot
 }
 
 MainWindow::~MainWindow() {
@@ -30,4 +31,9 @@ void MainWindow::openCoverDownloader() {
 
     // Show the dialog
     coverDialog.exec();
+}
+
+void MainWindow::openAboutDialog() {
+    AboutDialog aboutDialog(this);
+    aboutDialog.exec();
 }

@@ -4,5 +4,8 @@
     </qresource>
     <qresource prefix="/assets/images">
         <file>default-label.png</file>
+        <file>logo.png</file>
+        <file>banner.png</file>
     </qresource>
+    <qresource prefix="/"/>
 </RCC>
