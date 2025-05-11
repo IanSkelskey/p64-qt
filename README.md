@@ -35,6 +35,28 @@ This project is currently in the **prototype/early development** stage. It is **
 - [ ] Develop plugin management system
 - [ ] Create macOS and Linux compatible builds
 
+## Project Goals
+
+1. Create a more modern, user-friendly interface for Project64
+2. Maintain compatibility with existing Project64 plugins and ROM databases
+3. Improve cross-platform support
+4. Add features missing from the original Project64 (like the grid view with cover art)
+5. Gradually port over and improve the emulation core functionality
+
+## Cover Art Support
+
+This project includes support for displaying cover art in the ROM browser's grid view. Cover art is sourced from the [N64-Covers Repository](https://github.com/IanSkelskey/n64-covers), a dedicated collection of Nintendo 64 game covers specifically designed for use with this project.
+
+### Cover Naming Convention
+
+For proper detection by Project64-Qt, all cover images must follow the N64 cartridge ID naming convention:
+- Files should be named using the complete cartridge code (e.g., `NUS-NSME-USA.png` for Super Mario 64)
+- PNG format with transparency is preferred
+
+### Contributing Covers
+
+If you'd like to help expand the cover art collection, please visit the [N64-Covers Repository](https://github.com/IanSkelskey/n64-covers) and follow the contribution guidelines provided there.
+
 ## Building the Project
 
 *Build instructions will be added as the project matures.*
