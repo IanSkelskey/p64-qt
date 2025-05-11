@@ -3822,6 +3822,7 @@ ReleaseDate=1998/06/23
 Genre=Fighting
 Players=2
 ForceFeedback=Yes
+ProductID=NUS-NM4E-USA
 
 [FF44EDC4-1AAE9213-C:50]
 Good Name=Mortal Kombat Mythologies - Sub-Zero (E) [!]
@@ -3854,6 +3855,7 @@ ReleaseDate=1996/11/14
 Genre=Fighting
 Players=2
 ForceFeedback=No
+ProductID=NUS-NMKE-USA
 
 [83F33AA9-A901D40D-C:45]
 Good Name=Mortal Kombat Trilogy (U) (V1.2) [!]
@@ -4869,6 +4871,7 @@ ReleaseDate=2001/03/26
 Genre=Battle
 Players=4
 ForceFeedback=No
+ProductID=NUS-NP3E-USA
 
 [EE4FD7C2-9CF1D938-C:4A]
 Good Name=Pokemon Stadium GS (J) [!]
@@ -5314,6 +5317,7 @@ ReleaseDate=1999/06/29
 Genre=Party
 Players=4
 ForceFeedback=Yes
+ProductID=NUS-NRGE-USA
 
 [4D3ADFDA-7598FCAE-C:50]
 Good Name=Rugrats - Treasure Hunt (E) [!]
@@ -5346,6 +5350,7 @@ ReleaseDate=2000/11/12
 Genre=Platform
 Players=2
 ForceFeedback=Yes
+ProductID=NUS-NRKE-USA
 
 [B7CF2136-FA0AA715-C:50]
 Good Name=Rush 2 - Extreme Racing USA (E) [!]
