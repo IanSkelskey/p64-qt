@@ -786,6 +786,14 @@ Genre=Action
 Players=4
 ForceFeedback=No
 
+[9780C9FB-67CF6B4A-C:45]
+Good Name=Bomberman 64 - Arcade Edition (J) [T]
+Developer=Hudson Soft
+ReleaseDate=??/??/??
+Genre=Action
+Players=4
+ForceFeedback=No
+
 [237E73B4-D63B6B37-C:45]
 Good Name=Bomberman 64 - The Second Attack! (U) [!]
 Developer=Hudson Soft
@@ -3514,6 +3522,7 @@ ReleaseDate=1999/02/08
 Genre=Party
 Players=4
 ForceFeedback=Yes
+ProductID=NUS-CLBE-USA
 
 [82380387-DFC744D9-C:50]
 Good Name=Mario Party 2 (E) [!]
@@ -3522,6 +3531,7 @@ ReleaseDate=2000/01/24
 Genre=Party
 Players=4
 ForceFeedback=Yes
+ProductID=NUS-NMWP-EUR
 
 [ED567D0F-38B08915-C:4A]
 Good Name=Mario Party 2 (J) [!]
@@ -3538,6 +3548,7 @@ ReleaseDate=2000/01/24
 Genre=Party
 Players=4
 ForceFeedback=Yes
+ProductID=NUYS-NMWE-USA
 
 [C5674160-0F5F453C-C:50]
 Good Name=Mario Party 3 (E) [!]
@@ -3562,6 +3573,7 @@ ReleaseDate=2001/05/07
 Genre=Party
 Players=4
 ForceFeedback=Yes
+ProductID=NUS-NMVE-USA
 
 [3BA7CDDC-464E52A0-C:4A]
 Good Name=Mario Story (J) [!]
@@ -4736,6 +4748,7 @@ ReleaseDate=1999/07/27
 Genre=Simulation
 Players=1
 ForceFeedback=Yes
+ProductID=NUS-NPFE-USA
 
 [39119872-07722E9F-C:45]
 Good Name=Pokemon Snap Station (U) [!]
@@ -5583,6 +5596,7 @@ ReleaseDate=1999/12/10
 Genre=Puzzle
 Players=4
 ForceFeedback=No
+ProductID=NUS-NCYE-USA
 
 [20B53662-7B61899F-C:50]
 Good Name=South Park (E) [!]
@@ -5607,6 +5621,7 @@ ReleaseDate=1998/12/22
 Genre=Action
 Players=4
 ForceFeedback=Yes
+ProductID=NUS-NDTE-USA
 
 [4F8AFC3A-F7912DF2-C:50]
 Good Name=South Park Rally (E) [!]
@@ -5623,6 +5638,7 @@ ReleaseDate=2000/03/01
 Genre=Racing-Car
 Players=4
 ForceFeedback=Yes
+ProductID=NUS-NPRE-USA
 
 [37463412-EAC5388D-C:4A]
 Good Name=Space Dynamites (J) [!]
