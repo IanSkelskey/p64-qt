@@ -6,7 +6,7 @@ A modern Qt-based reimplementation of Project64, the popular Nintendo 64 emulato
 
 This project is currently in the **prototype/early development** stage. It is **not a working emulator yet**, but rather a foundational UI framework that will eventually connect to the Project64 emulation core.
 
-![Project Screenshot](screenshots/screenshot.png) *(Add a screenshot when available)*
+![Project Screenshot](Screenshots/rom-browser-grid-view.png)
 
 ## Currently Implemented Features
 
