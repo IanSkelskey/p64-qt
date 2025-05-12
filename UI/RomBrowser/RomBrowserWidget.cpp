@@ -523,28 +523,32 @@ void RomBrowserWidget::setupGridView()
     // Calculate proper item size with room for title
     QSize coverSize = m_romListModel->coverSize();
     
-    // Add generous spacing for consistency
-    int itemHeight = coverSize.height() + 20; // Base height with margins
+    // Calculate a reasonable grid size based on content
+    int itemWidth = coverSize.width() + 20;
+    
+    // Calculate height based on whether titles are shown
+    int itemHeight = coverSize.height() + 15; // Base height with minimal padding
     if (m_romListModel->showTitles()) {
-        itemHeight += 30; // Reduced space for title text (was 50)
+        // Add space for title and metadata (if any)
+        itemHeight += 35; // Restored reasonable height for title area
     }
     
-    // Force minimum size to prevent tiny items
-    int minWidth = qMax(coverSize.width() + 30, 150);
-    int minHeight = qMax(itemHeight, 150);
-    
     // Set grid size with proper padding
-    QSize gridSize(minWidth, minHeight);
+    QSize gridSize(itemWidth, itemHeight);
     m_gridView->setGridSize(gridSize);
     
-    // Set better spacing for all items - increase for better separation
-    m_gridView->setSpacing(25);
+    // Reasonable spacing between items
+    m_gridView->setSpacing(15);
     
     // Update the view display options
-    m_gridView->setWordWrap(true);                      // Enable word wrapping for titles
-    m_gridView->setTextElideMode(Qt::ElideRight);       // Elide text that's too long
-    m_gridView->setDragEnabled(false);                  // Disable drag operations for stability
-    m_gridView->setEditTriggers(QAbstractItemView::NoEditTriggers); // Disable editing
+    m_gridView->setWordWrap(true);
+    m_gridView->setTextElideMode(Qt::ElideRight);
+    m_gridView->setDragEnabled(false);
+    m_gridView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    
+    // Important: enable flow layout to use proper item sizes
+    m_gridView->setResizeMode(QListView::Adjust);
+    m_gridView->setUniformItemSizes(false);
     
     // Force a complete reset and refresh
     m_gridView->reset();

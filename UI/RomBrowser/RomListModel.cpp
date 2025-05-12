@@ -783,6 +783,60 @@ RomGridDelegate::RomGridDelegate(RomListModel* model, QObject* parent)
 {
 }
 
+// Helper method implementations
+QString RomGridDelegate::cleanTitle(const QString& title, QString& countryCode, QString& version) const
+{
+    QString cleanedTitle = title;
+    
+    // Extract country code - common patterns like (U), (E), (J), (USA), etc.
+    QRegularExpression countryRegex("\\([A-Z!]\\)|\\((USA|Europe|Japan|Germany|Italy|France|Spain|Australia)\\)");
+    QRegularExpressionMatch countryMatch = countryRegex.match(cleanedTitle);
+    if (countryMatch.hasMatch()) {
+        QString match = countryMatch.captured(0);
+        countryCode = match;
+        cleanedTitle.remove(match);
+    }
+    
+    // Extract version - patterns like (V1.0), (V1.1), etc.
+    QRegularExpression versionRegex("\\(V\\d+\\.\\d+\\)");
+    QRegularExpressionMatch versionMatch = versionRegex.match(cleanedTitle);
+    if (versionMatch.hasMatch()) {
+        QString match = versionMatch.captured(0);
+        version = match;
+        cleanedTitle.remove(match);
+    }
+    
+    // Clean up any remaining parentheses and extra spaces
+    cleanedTitle = cleanedTitle.replace(QRegularExpression("\\([^)]*\\)"), "")
+                               .replace(QRegularExpression("\\s+"), " ")
+                               .trimmed();
+                               
+    return cleanedTitle;
+}
+
+QIcon RomGridDelegate::getCountryIcon(const QString& countryCode) const
+{
+    // Map parenthetical country codes to flag icons
+    if (countryCode.contains("U") || countryCode.contains("USA"))
+        return QIcon(":/flags/Resources/flags/usa.svg");
+    else if (countryCode.contains("E") || countryCode.contains("Europe"))
+        return QIcon(":/flags/Resources/flags/europe.svg");
+    else if (countryCode.contains("J") || countryCode.contains("Japan"))
+        return QIcon(":/flags/Resources/flags/japan.svg");
+    else if (countryCode.contains("G") || countryCode.contains("Germany"))
+        return QIcon(":/flags/Resources/flags/germany.svg");
+    else if (countryCode.contains("F") || countryCode.contains("France"))
+        return QIcon(":/flags/Resources/flags/france.svg");
+    else if (countryCode.contains("I") || countryCode.contains("Italy"))
+        return QIcon(":/flags/Resources/flags/italy.svg");
+    else if (countryCode.contains("S") || countryCode.contains("Spain"))
+        return QIcon(":/flags/Resources/flags/spain.svg");
+    else if (countryCode.contains("A") || countryCode.contains("Australia"))
+        return QIcon(":/flags/Resources/flags/australia.svg");
+    else
+        return QIcon(":/flags/Resources/flags/unknown.svg");
+}
+
 void RomGridDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, 
                             const QModelIndex& index) const
 {
@@ -795,11 +849,21 @@ void RomGridDelegate::paint(QPainter* painter, const QStyleOptionViewItem& optio
     
     // Get cover image and title
     QPixmap cover = qvariant_cast<QPixmap>(index.data(Qt::UserRole + 1));
-    QString title = index.data(Qt::UserRole + 2).toString();
+    QString originalTitle = index.data(Qt::UserRole + 2).toString();
+    
+    // Extract country code and version from title
+    QString countryCode;
+    QString version;
+    QString cleanedTitle = cleanTitle(originalTitle, countryCode, version);
+    
+    // Determine if we need to display metadata
+    bool hasCountry = !countryCode.isEmpty();
+    bool hasVersion = !version.isEmpty();
+    bool hasMetadata = hasCountry || hasVersion;
     
     // Ensure the title isn't empty
-    if (title.isEmpty()) {
-        title = tr("Unknown");
+    if (cleanedTitle.isEmpty()) {
+        cleanedTitle = tr("Unknown");
     }
     
     // Draw selection background if selected
@@ -814,28 +878,21 @@ void RomGridDelegate::paint(QPainter* painter, const QStyleOptionViewItem& optio
         painter->fillRect(option.rect, hoverColor);
     }
     
-    // Fixed calculations for cover placement
+    // Fixed calculations for cover placement - minimal padding
     QSize coverSize = m_model->coverSize();
-    
-    // Calculate the exact vertical space we need
-    int titleSpace = m_model->showTitles() ? 30 : 10;  // Reduced space for title (was 50)
-    int coverHeight = qMin(coverSize.height(), option.rect.height() - titleSpace);
-    int coverWidth = qMin(coverSize.width(), option.rect.width() - 10);
     
     // Calculate actual display size maintaining aspect ratio
     QSize actualSize;
     if (cover.isNull()) {
-        // Use fixed size for null pixmaps
-        actualSize = QSize(coverWidth, coverHeight);
+        actualSize = QSize(coverSize.width(), coverSize.height());
     } else {
-        // Use scale for non-null pixmaps to maintain aspect ratio
-        actualSize = cover.size().scaled(coverWidth, coverHeight, Qt::KeepAspectRatio);
+        actualSize = cover.size().scaled(coverSize.width(), coverSize.height(), Qt::KeepAspectRatio);
     }
     
-    // Center the cover in the available space
+    // Center the cover in the available space with minimal top padding
     QRect coverRect(
         option.rect.left() + (option.rect.width() - actualSize.width()) / 2,
-        option.rect.top() + 10, // Consistent top margin
+        option.rect.top() + 3, // Minimal top padding
         actualSize.width(),
         actualSize.height()
     );
@@ -851,48 +908,123 @@ void RomGridDelegate::paint(QPainter* painter, const QStyleOptionViewItem& optio
     
     // Draw title if titles are enabled
     if (m_model->showTitles()) {
-        // Create text rect exactly below the cover with fixed position
-        int textTop = coverRect.bottom() + 5;  // Reduced distance from cover bottom (was 10)
-        int textHeight = option.rect.bottom() - textTop - 5;  // Space between bottom of text and edge of item
+        // Create text rect immediately below the cover
+        int textTop = coverRect.bottom() + 2; // Minimal space between cover and title
         
         QRect textRect = QRect(
             option.rect.left() + 5,
             textTop,
             option.rect.width() - 10,
-            textHeight
+            18  // Compact height for title
         );
         
-        // Create a contrasting background for the text to ensure visibility
+        // Create a contrasting background for the text area
         QColor bgColor = option.palette.window().color();
         QColor textColor = option.palette.text().color();
         
         if (option.state & QStyle::State_Selected) {
-            // Use selection colors for better visibility when selected
             bgColor = option.palette.highlight().color();
-            bgColor.setAlpha(60);  // More transparent for better readability
+            bgColor.setAlpha(60);
             textColor = option.palette.highlightedText().color();
         }
         
-        // Draw background panel for text - make it slightly wider than the text
-        QRect textBgRect = textRect.adjusted(-3, -2, 3, 2); // Smaller vertical padding (was -3, 3)
-        painter->fillRect(textBgRect, bgColor);
-        painter->setPen(textColor);
+        // Calculate precise background height based on content
+        int bgHeight = 18; // Default title height
+        if (hasMetadata) {
+            bgHeight += 14; // Add just enough for metadata
+        }
         
-        // Use a more compact font for the title
+        // Draw background for text area
+        QRect textBgRect = textRect.adjusted(-2, -2, 2, 2);
+        textBgRect.setHeight(bgHeight);
+        painter->fillRect(textBgRect, bgColor);
+        
+        // Set font for the main title
         QFont titleFont = option.font;
         titleFont.setBold(true);
-        titleFont.setPointSize(option.font.pointSize()); // Don't increase size (was +1)
         painter->setFont(titleFont);
+        painter->setPen(textColor);
         
         // Elide text properly for display
-        // Draw text as a single line with ellipsis if needed
         QFontMetrics fm(titleFont);
-        QString elidedText = fm.elidedText(title, Qt::ElideRight, textRect.width() - 10);
+        QString elidedText = fm.elidedText(cleanedTitle, Qt::ElideRight, textRect.width() - 10);
         
-        // Draw the title text centered in the text area
+        // Draw the title text centered
         painter->drawText(textRect, 
-                         Qt::AlignHCenter | Qt::AlignVCenter | Qt::TextSingleLine, // Use single line (was TextWordWrap)
+                         Qt::AlignHCenter | Qt::AlignVCenter | Qt::TextSingleLine,
                          elidedText);
+        
+        // Only draw metadata if we have any
+        if (hasMetadata) {
+            // Position metadata immediately below the title
+            QRect metadataRect = QRect(
+                textRect.left(),
+                textRect.bottom() - 1, // Overlap slightly for compactness
+                textRect.width(),
+                14  // Minimal height for metadata
+            );
+            
+            // Set a smaller font for metadata
+            QFont metadataFont = option.font;
+            metadataFont.setPointSize(qMax(metadataFont.pointSize() - 1, 8)); // Ensure a minimum reasonable size
+            painter->setFont(metadataFont);
+            
+            // Determine positions based on what metadata is available
+            if (hasCountry && hasVersion) {
+                // Draw both country flag and version
+                QRect flagRect = QRect(
+                    metadataRect.left() + (metadataRect.width() / 2) - 25,
+                    metadataRect.top(),
+                    14,
+                    14
+                );
+                
+                QIcon countryIcon = getCountryIcon(countryCode);
+                if (!countryIcon.isNull()) {
+                    countryIcon.paint(painter, flagRect);
+                }
+                
+                QRect versionRect = QRect(
+                    metadataRect.left() + (metadataRect.width() / 2) + 5,
+                    metadataRect.top(),
+                    40,
+                    14
+                );
+                
+                // Clean up the version string
+                version.remove("(").remove(")");
+                painter->drawText(versionRect, 
+                                 Qt::AlignLeft | Qt::AlignVCenter,
+                                 version);
+            } else if (hasCountry) {
+                // Only country flag - center it
+                QRect flagRect = QRect(
+                    metadataRect.left() + (metadataRect.width() - 14) / 2,
+                    metadataRect.top(),
+                    14,
+                    14
+                );
+                
+                QIcon countryIcon = getCountryIcon(countryCode);
+                if (!countryIcon.isNull()) {
+                    countryIcon.paint(painter, flagRect);
+                }
+            } else if (hasVersion) {
+                // Only version - center it
+                QRect versionRect = QRect(
+                    metadataRect.left(),
+                    metadataRect.top(),
+                    metadataRect.width(),
+                    14
+                );
+                
+                // Clean up the version string
+                version.remove("(").remove(")");
+                painter->drawText(versionRect, 
+                                 Qt::AlignCenter | Qt::AlignVCenter,
+                                 version);
+            }
+        }
     }
     
     painter->restore();
@@ -904,21 +1036,27 @@ QSize RomGridDelegate::sizeHint(const QStyleOptionViewItem& option,
     if (!m_model)
         return QSize(200, 200);
     
-    // Get the cover size
+    // Get cover size from the model
     QSize coverSize = m_model->coverSize();
     
-    // Base width with some extra padding
-    int width = coverSize.width() + 30;  // Increased horizontal padding
+    // Base width with reasonable padding
+    int width = coverSize.width() + 20;
     
-    // Add space for the title if titles are shown
-    int height = coverSize.height() + 20; // Base height with margins
+    // Get metadata to determine if we need extra height
+    QString originalTitle = index.data(Qt::UserRole + 2).toString();
+    QString countryCode, version;
+    cleanTitle(originalTitle, countryCode, version);
+    bool hasMetadata = !countryCode.isEmpty() || !version.isEmpty();
+    
+    // Calculate the height needed based on the content
+    int height = coverSize.height() + 15; // Base height with padding
+    
     if (m_model->showTitles()) {
-        height += 30; // Reduced space for title text (was 50)
+        // Add height based on if we have metadata
+        height += hasMetadata ? 35 : 25; // Reasonable height for title (and metadata if present)
     }
     
     return QSize(width, height);
 }
-
-// ...rest of the existing code ...
 
 } // namespace QT_UI

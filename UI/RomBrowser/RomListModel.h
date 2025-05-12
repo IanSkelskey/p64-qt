@@ -182,6 +182,8 @@ public:
     QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     
 private:
+    QString cleanTitle(const QString& title, QString& countryCode, QString& version) const;
+    QIcon getCountryIcon(const QString& countryCode) const;
     RomListModel* m_model;
 };
 
