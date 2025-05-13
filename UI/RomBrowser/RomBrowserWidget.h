@@ -115,6 +115,7 @@ private slots:
     void onScanProgress(int current, int total);
     void onScanFinished();
     void onCoverDirectoryClicked();
+    void onRefreshCoversClicked(); // New slot for refreshing covers
     void updateToolbar();
     
 private:
@@ -143,6 +144,7 @@ private:
     QAction* m_gridViewAction;
     QAction* m_showTitlesAction;
     QAction* m_coverDirAction;
+    QAction* m_refreshCoversAction; // New action for refreshing covers
     
     // Grid view controls
     QSlider* m_zoomSlider;

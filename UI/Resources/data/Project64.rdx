@@ -150,7 +150,7 @@ ReleaseDate=1999/11/22
 Genre=Action
 Players=2
 ForceFeedback=No
-ProductID=NUS-NERE-ASM
+ProductID=NUS-NERE-USA
 
 [D83045C8-F29D3A36-C:50]
 Good Name=AeroGauge (E) [!]
@@ -825,6 +825,7 @@ ReleaseDate=1997/12/01
 Genre=Action
 Players=4
 ForceFeedback=No
+ProductID=NUS-NBME-USA
 
 [D85C4E29-88E276AF-C:50]
 Good Name=Bomberman Hero (E) [!]
@@ -1248,6 +1249,7 @@ ReleaseDate=1996/12/03
 Genre=Racing-Car
 Players=2
 ForceFeedback=No
+ProductID=NUS-NCUE-USA
 
 [5306CF45-CBC49250-C:45]
 Good Name=Cruis'n USA (U) (V1.1) [!]
@@ -1794,6 +1796,7 @@ ReleaseDate=2000/05/02
 Genre=Racing-Motorbk
 Players=4
 ForceFeedback=Yes
+ProductID=NUS-NMXE-USA
 
 [8E9D834E-1E8B29A9-C:50]
 Good Name=Extreme-G (E) [!]
@@ -2366,6 +2369,7 @@ ReleaseDate=1998/09/09
 Genre=Racing-Car
 Players=2
 ForceFeedback=Yes
+ProductID=NUS-NGCE-USA
 
 //-------------------------  H  --------------------------
 
@@ -4876,6 +4880,7 @@ ReleaseDate=2000/09/25
 Genre=Puzzle
 Players=2
 ForceFeedback=No
+ProductID=NUS-NPNE-USA
 
 [7BB18D40-83138559-C:55]
 Good Name=Pokemon Snap (A) [!]
@@ -5288,6 +5293,7 @@ ReleaseDate=1998/03/30
 Genre=Action
 Players=3
 ForceFeedback=Yes
+ProductID=NUS-NRPE-USA
 
 [5DFC4249-99529C07-C:50]
 Good Name=Rampage 2 - Universal Tour (E) [!]
@@ -6030,6 +6036,7 @@ ReleaseDate=1996/12/03
 Genre=Action
 Players=1
 ForceFeedback=No
+ProductID=NUS-NSWE-USA
 
 [4147B091-63251060-C:45]
 Good Name=Star Wars - Shadows of the Empire (U) (V1.1) [!]
@@ -6752,6 +6759,7 @@ ReleaseDate=1998/12/10
 Genre=Action
 Players=4
 ForceFeedback=Yes
+ProductID=NUS-NTYE-USA
 
 [E8C95AFC-35D121DA-C:45]
 Good Name=Turok 2 - Seeds of Evil - Kiosk (U) [!]
@@ -7061,6 +7069,7 @@ ReleaseDate=1996/11/14
 Genre=Sport-Hockey
 Players=4
 ForceFeedback=No
+ProductID=NUS-NWGP-EUR
 
 [F1301043-FD80541A-C:4A]
 Good Name=Wayne Gretzky's 3D Hockey (J) [!]
@@ -7078,6 +7087,7 @@ ReleaseDate=1996/11/14
 Genre=Sport-Hockey
 Players=4
 ForceFeedback=No
+ProductID=NUS-NWGE-USA
 
 [DC3BAA59-0ABB456A-C:45]
 Good Name=Wayne Gretzky's 3D Hockey (U) (V1.1)
@@ -7204,6 +7214,7 @@ ReleaseDate=1998/06/12
 Genre=Puzzle
 Players=2
 ForceFeedback=No
+ProductID=NUS-NWTE-USA
 
 [E896092B-DC244D4E-C:45]
 Good Name=Wheel of Fortune (U) [!]

@@ -247,6 +247,26 @@ void RomBrowserWidget::onCoverDirectoryClicked()
     }
 }
 
+void RomBrowserWidget::onRefreshCoversClicked()
+{
+    if (m_romListModel) {
+        // Update status to show we're refreshing covers
+        m_statusLabel->setText(tr("Refreshing cover art..."));
+        
+        // Refresh covers in the model
+        m_romListModel->refreshCovers();
+        
+        // Update status when complete
+        m_statusLabel->setText(tr("Cover art refreshed"));
+        
+        // Setup grid view again to ensure proper sizing
+        if (m_romListModel->viewMode() == RomListModel::GridView) {
+            setupGridView();
+            m_gridView->viewport()->update();
+        }
+    }
+}
+
 void RomBrowserWidget::updateToolbar()
 {
     // Update view mode buttons based on current mode
@@ -434,6 +454,11 @@ void RomBrowserWidget::createToolbar()
     
     // Cover directory button
     m_coverDirAction = m_toolbar->addAction(tr("Cover Directory..."), this, &RomBrowserWidget::onCoverDirectoryClicked);
+    
+    // Refresh covers button
+    m_refreshCoversAction = m_toolbar->addAction(tr("Refresh Covers"), this, &RomBrowserWidget::onRefreshCoversClicked);
+    // Optionally add an icon for the refresh button
+    m_refreshCoversAction->setIcon(QIcon::fromTheme("view-refresh", QIcon(":/icons/Resources/icons/refresh.png")));
 }
 
 void RomBrowserWidget::createEmptyState()
