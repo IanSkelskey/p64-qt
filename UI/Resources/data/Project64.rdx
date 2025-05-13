@@ -1700,6 +1700,7 @@ ReleaseDate=1997/11/14
 Genre=Shooter FP
 Players=4
 ForceFeedback=Yes
+ProductID=NUS-NDNE-USA
 
 //-------------------------  E  --------------------------
 
@@ -3210,6 +3211,7 @@ ReleaseDate=????/??/??
 Genre=Action-Adventure
 Players=1
 ForceFeedback=Yes
+ProductID=NUS-CZLE-USA-1
 
 [693BA2AE-B7F14E9F-C:45]
 Good Name=Legend of Zelda, The - Ocarina of Time (U) (V1.2) [!]
@@ -7045,6 +7047,7 @@ ReleaseDate=1996/11/05
 Genre=Racing-Waterbk
 Players=2
 ForceFeedback=No
+ProductID=NUS-NWRE-USA
 
 [492F4B61-04E5146A-C:45]
 Good Name=Wave Race 64 (U) (V1.1) [!]
@@ -7112,7 +7115,7 @@ ReleaseDate=1997/12/03
 Genre=Sport-Hockey
 Players=4
 ForceFeedback=No
-ProductID=P-NUS-NW8E-USA
+ProductID=NUS-NW8E-USA
 
 [396F5ADD-6693ECA7-C:45]
 Good Name=WCW Backstage Assault (U) [!]
