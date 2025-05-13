@@ -4943,6 +4943,15 @@ Genre=Simulation
 Players=1
 ForceFeedback=Yes
 
+[90F5D9B3-9D0EDCF0-C:45]
+Good Name=Pokemon Stadium (U) (V1.0)
+Developer=Nintendo / HAL Laboratory
+ReleaseDate=2000/02/29
+Genre=Battle
+Players=4
+ForceFeedback=No
+ProductID=NUS-NPOE-USA
+
 [1A122D43-C17DAF0F-C:45]
 Good Name=Pokemon Stadium - Kiosk (U) (V1.1) [!]
 Developer=Nintendo / HAL Laboratory

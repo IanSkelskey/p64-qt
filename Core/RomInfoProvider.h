@@ -40,6 +40,14 @@ enum RomFileFormat {
     Format_7zip
 };
 
+// Add a ROM byte order format enum
+enum RomByteFormat {
+    Format_Unknown,
+    Format_Z64,    // Big Endian (native N64)
+    Format_N64,    // Byte-swapped (middle-endian)
+    Format_V64     // Little Endian
+};
+
 class RomInfoProvider {
 public:
     RomInfoProvider();
@@ -74,12 +82,20 @@ public:
     bool getForceFeedback() const;
     QString getProductID() const;
     
+    // Add a method to get the detected ROM format
+    RomByteFormat getByteFormat() const;
+    
 private:
     void initializeCountryNames();
     void parseRomHeader();
     void calculateCRC();
     bool loadRomInformation();
     void loadRDBInfo();
+    
+    // Add methods for byte format detection and conversion
+    RomByteFormat detectByteFormat(const QByteArray& header);
+    QByteArray convertToZ64Format(const QByteArray& data, RomByteFormat sourceFormat);
+    uint32_t byteSwap32(uint32_t value, RomByteFormat sourceFormat);
     
     // Static helper methods
     static QString countryCodeToName(CountryCode countryCode);
@@ -109,6 +125,9 @@ private:
     
     // Static country name mapping
     static QMap<CountryCode, QString> m_countryNames;
+
+    // Add member to store the detected byte format
+    RomByteFormat m_byteFormat;
 };
 
 } // namespace QT_UI
