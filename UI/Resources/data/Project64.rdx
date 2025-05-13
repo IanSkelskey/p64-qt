@@ -1524,6 +1524,7 @@ ReleaseDate=1999/11/22
 Genre=Platform
 Players=1
 ForceFeedback=Yes
+ProductID=DIS-NUS-NDPE-USA
 
 [11936D8C-6F2C4B43-C:50]
 Good Name=Donkey Kong 64 (E) [!]
@@ -4949,6 +4950,7 @@ ReleaseDate=????/??/??
 Genre=Battle
 Players=4
 ForceFeedback=No
+ProductID=DIS-NUS-NPOE-USA
 
 [84077275-57315B9C-C:50]
 Good Name=Pokemon Stadium (E) [!]
@@ -6452,7 +6454,6 @@ ReleaseDate=2000/03/15
 Genre=Sport-Skating
 Players=2
 ForceFeedback=Yes
-ProductID=NUS-NTFE-USA
 
 [84EAB557-C88A190F-C:50]
 Good Name=Tony Hawk's Pro Skater 2 (E) [!]
