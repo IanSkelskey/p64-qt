@@ -1,4 +1,5 @@
 #include "UIAbstractionLayer.h"
+#include "Core/SettingsManager.h"
 #include <QDebug>
 #include <QFileInfo>
 
@@ -6,8 +7,8 @@ namespace QT_UI {
 
 UIAbstractionLayer& UIAbstractionLayer::instance()
 {
-    static UIAbstractionLayer instance;
-    return instance;
+    static UIAbstractionLayer instanceObj;
+    return instanceObj;
 }
 
 UIAbstractionLayer::UIAbstractionLayer()
@@ -26,12 +27,25 @@ bool UIAbstractionLayer::initialize()
     
     // Initialize resources and connections to the emulation core
     
-    // Load any required settings
+    // Load any required settings from the settings manager
+    loadSettings();
     
     // Set up any signal-slot connections needed for UI-core communication
     
     // Return true if initialization was successful
     return true;
+}
+
+void UIAbstractionLayer::loadSettings()
+{
+    // Use the SettingsManager to load required settings
+    // This ensures settings are loaded consistently from a central location
+    auto& settings = SettingsManager::instance();
+    
+    // Initialize settings with defaults if not already set
+    settings.initializeDefaults();
+    
+    // Any core settings needed by the abstraction layer can be retrieved here
 }
 
 bool UIAbstractionLayer::loadROM(const QString& romPath)

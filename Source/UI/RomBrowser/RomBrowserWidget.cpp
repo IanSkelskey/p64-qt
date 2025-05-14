@@ -1,4 +1,5 @@
 #include "RomBrowserWidget.h"
+#include "../../Core/SettingsManager.h"
 #include "../IconHelper.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -615,10 +616,10 @@ void RomBrowserWidget::updateEmptyStateVisibility()
 
 void RomBrowserWidget::loadSettings()
 {
-    QSettings settings("Project64", "QtUI");
+    auto& settings = QT_UI::SettingsManager::instance();
     
     // Load last directory
-    m_currentDirectory = settings.value("RomBrowser/LastDirectory").toString();
+    m_currentDirectory = settings.lastRomDirectory();
     
     // Load view mode from the model (it loads its own settings)
     if (m_romListModel->viewMode() == RomListModel::DetailView) {
@@ -628,7 +629,7 @@ void RomBrowserWidget::loadSettings()
     }
     
     // Load table header state
-    QByteArray headerState = settings.value("RomBrowser/TableHeader").toByteArray();
+    QByteArray headerState = settings.tableHeaderState();
     if (!headerState.isEmpty()) {
         m_detailView->header()->restoreState(headerState);
     }
@@ -645,78 +646,24 @@ void RomBrowserWidget::loadSettings()
     }
 }
 
-void RomBrowserWidget::reloadColumnSettings()
+void RomBrowserWidget::saveSettings()
 {
-    qDebug() << "=== Reloading column settings in ROM Browser ===";
+    auto& settings = QT_UI::SettingsManager::instance();
     
-    // Store selection to restore it after reset
-    QModelIndex currentIndex = m_detailView->currentIndex();
-    QString selectedRomPath;
-    if (currentIndex.isValid()) {
-        selectedRomPath = m_proxyModel->data(currentIndex, Qt::UserRole).toString();
-        qDebug() << "Saving selection:" << selectedRomPath;
-    }
+    // Save directory
+    settings.setLastRomDirectory(m_currentDirectory);
     
-    // Temporarily disable updates to prevent visual glitches
-    setUpdatesEnabled(false);
-    m_detailView->setUpdatesEnabled(false);
-    
-    // Load column settings from QSettings
-    loadColumnSettings();
-    
-    // If we're in detail view, make sure to completely refresh the view
-    if (m_romListModel->viewMode() == RomListModel::DetailView) {
-        qDebug() << "Completely refreshing detail view with new columns";
-        
-        // Disconnect model signals temporarily to avoid crashes
-        m_detailView->disconnect();
-        
-        // Reset proxy model to ensure it updates with the new column layout
-        m_proxyModel->invalidate();
-        
-        // Force a complete view reset
-        m_detailView->reset();
-        
-        // Restore connections
-        connect(m_detailView, &QTreeView::clicked, this, &RomBrowserWidget::onItemClicked);
-        connect(m_detailView, &QTreeView::doubleClicked, this, &RomBrowserWidget::onItemDoubleClicked);
-        connect(m_detailView->header(), &QHeaderView::sortIndicatorChanged, this, &RomBrowserWidget::onSortIndicatorChanged);
-        
-        // Restore selection if possible
-        if (!selectedRomPath.isEmpty()) {
-            for (int i = 0; i < m_proxyModel->rowCount(); i++) {
-                QModelIndex idx = m_proxyModel->index(i, 0);
-                if (m_proxyModel->data(idx, Qt::UserRole).toString() == selectedRomPath) {
-                    m_detailView->setCurrentIndex(idx);
-                    break;
-                }
-            }
-        }
-        
-        // Resize columns to appropriate width
-        QTimer::singleShot(50, this, &RomBrowserWidget::resizeDetailViewColumns);
-    }
-    
-    // Re-enable updates
-    m_detailView->setUpdatesEnabled(true);
-    setUpdatesEnabled(true);
-    
-    // Force a visual refresh
-    m_detailView->viewport()->update();
-    
-    qDebug() << "Detail view updated with" << m_romListModel->visibleColumns().size() 
-             << "columns";
-    qDebug() << "=== Column reload complete ===";
+    // Save table header state
+    settings.setTableHeaderState(m_detailView->header()->saveState());
 }
 
 void RomBrowserWidget::loadColumnSettings()
 {
-    QSettings settings("Project64", "QtUI");
+    auto& settings = QT_UI::SettingsManager::instance();
     
     // Custom visible columns
-    QVariant visibleColumnsVar = settings.value("RomBrowser/VisibleColumns");
-    if (!visibleColumnsVar.isNull()) {
-        QList<QVariant> visibleColumns = visibleColumnsVar.toList();
+    QVariantList visibleColumns = settings.visibleColumns();
+    if (!visibleColumns.isEmpty()) {
         QVector<RomListModel::RomColumns> columns;
         
         qDebug() << "Loading columns from settings. Count:" << visibleColumns.size();
@@ -753,26 +700,6 @@ void RomBrowserWidget::loadColumnSettings()
     } else {
         qDebug() << "No column settings found";
     }
-}
-
-void RomBrowserWidget::saveSettings()
-{
-    QSettings settings("Project64", "QtUI");
-    
-    // Save directory
-    settings.setValue("RomBrowser/LastDirectory", m_currentDirectory);
-    
-    // Save table header state
-    settings.setValue("RomBrowser/TableHeader", m_detailView->header()->saveState());
-    
-    // Save visible columns
-    QList<QVariant> visibleColumns;
-    foreach(RomListModel::RomColumns column, m_romListModel->visibleColumns()) {
-        visibleColumns.append(QVariant(static_cast<int>(column)));
-    }
-    settings.setValue("RomBrowser/VisibleColumns", visibleColumns);
-    
-    // The model saves its own view mode and grid settings
 }
 
 void RomBrowserWidget::resizeDetailViewColumns()
@@ -812,6 +739,50 @@ void RomBrowserWidget::setShowTitles(bool show)
             // Emit signal for MainWindow to catch
             emit showTitlesToggled(show);
         }
+    }
+}
+
+void RomBrowserWidget::reloadColumnSettings()
+{
+    qDebug() << "Reloading column settings in RomBrowserWidget";
+    
+    // Get the settings
+    auto& settings = QT_UI::SettingsManager::instance();
+    
+    // Get columns from settings
+    QVariantList visibleColumnSettings = settings.visibleColumns();
+    if (visibleColumnSettings.isEmpty()) {
+        qDebug() << "No column settings found, not updating";
+        return;
+    }
+    
+    // Convert variant list to column IDs
+    QVector<RomListModel::RomColumns> columns;
+    for (const QVariant& column : visibleColumnSettings) {
+        int colValue = column.toInt();
+        if (colValue >= 0 && colValue < RomListModel::ColumnCount) {
+            columns.append(static_cast<RomListModel::RomColumns>(colValue));
+        }
+    }
+    
+    // Only proceed if we have valid columns
+    if (columns.isEmpty()) {
+        qDebug() << "No valid columns after filtering, not updating";
+        return;
+    }
+    
+    qDebug() << "Applying" << columns.size() << "columns from settings to model";
+    
+    // Apply the columns to the model - this will trigger an update of the views
+    if (m_romListModel) {
+        m_romListModel->setVisibleColumns(columns);
+        
+        // Ensure proper resizing after columns change
+        if (m_romListModel->viewMode() == RomListModel::DetailView) {
+            QTimer::singleShot(0, this, &RomBrowserWidget::resizeDetailViewColumns);
+        }
+    } else {
+        qDebug() << "RomListModel not available, can't apply column settings";
     }
 }
 

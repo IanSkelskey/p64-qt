@@ -1,4 +1,5 @@
 #include "ThemeManager.h"
+#include "../../Core/SettingsManager.h"
 #include <QSettings>
 #include <QFile>
 #include <QStyleFactory>
@@ -231,8 +232,9 @@ bool ThemeManager::isSystemInDarkMode() const
 
 void ThemeManager::saveThemeSettings(Theme theme)
 {
-    QSettings settings("Project64", "QtUI");
-    settings.setValue("Theme/CurrentTheme", static_cast<int>(theme));
+    // Use centralized SettingsManager instead of direct QSettings
+    QT_UI::SettingsManager::instance().setTheme(
+        static_cast<QT_UI::SettingsManager::Theme>(theme));
 }
 
 } // namespace QT_UI

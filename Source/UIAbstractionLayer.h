@@ -97,6 +97,11 @@ private:
     // Prevent copying
     UIAbstractionLayer(const UIAbstractionLayer&) = delete;
     UIAbstractionLayer& operator=(const UIAbstractionLayer&) = delete;
+    
+    /**
+     * @brief Loads settings from the SettingsManager
+     */
+    void loadSettings();
 };
 
 } // namespace QT_UI

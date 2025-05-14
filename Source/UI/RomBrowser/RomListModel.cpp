@@ -1,4 +1,5 @@
 #include "RomListModel.h"
+#include "../../Core/SettingsManager.h"
 #include <QDir>
 #include <QFileInfo>
 #include <QDateTime>
@@ -820,87 +821,92 @@ QPixmap RomListModel::createPlaceholderCover(const RomInfo& info) const
     return placeholder;
 }
 
+void RomListModel::setDefaultColumns()
+{
+    // Define default columns for the ROM browser with only some columns initially visible
+    QVector<RomColumns> defaultVisibleColumns = {
+        FileName,
+        InternalName,
+        Size,
+        Country
+    };
+    
+    // Access the settings to store default columns
+    auto& settings = QT_UI::SettingsManager::instance();
+    
+    // Store the default visible columns in SettingsManager
+    QVariantList columns;
+    for (auto column : defaultVisibleColumns) {
+        columns.append(static_cast<int>(column));
+    }
+    
+    // Use the SettingsManager API to store the visible columns
+    settings.setVisibleColumns(columns);
+    
+    // Update the model with the new columns
+    beginResetModel();
+    m_visibleColumns = defaultVisibleColumns;
+    endResetModel();
+    
+    emit columnsChanged();
+}
+
 void RomListModel::loadSettings()
 {
-    QSettings settings("Project64", "QtUI");
+    auto& settings = QT_UI::SettingsManager::instance();
     
     // Load view mode setting
-    int viewMode = settings.value("RomBrowser/ViewMode", static_cast<int>(DetailView)).toInt();
+    int viewMode = settings.viewMode();
     m_currentViewMode = static_cast<ViewMode>(viewMode);
     
     // Load grid view settings
-    m_showTitles = settings.value("RomBrowser/ShowTitles", true).toBool();
-    m_coverScale = settings.value("RomBrowser/CoverScale", DEFAULT_COVER_SCALE).toFloat();
+    m_showTitles = settings.showTitles();
+    m_coverScale = settings.coverScale();
     
     // Load cover directory
-    m_coverDirectory = settings.value("RomBrowser/CoverDirectory", 
-                                    QApplication::applicationDirPath() + "/covers").toString();
+    m_coverDirectory = settings.coverDirectory();
                                     
-    // CRITICAL FIX: DO NOT set default columns at all here - if settings exist, use them exclusively
-    QVariant visibleColumnsVar = settings.value("RomBrowser/VisibleColumns");
-    if (!visibleColumnsVar.isNull()) {
-        QList<QVariant> visibleColumns = visibleColumnsVar.toList();
-        QVector<RomColumns> columns;
-        
+    // Load column settings
+    QVariantList visibleColumns = settings.visibleColumns();
+    QVector<RomColumns> columns;
+    
+    // Only process if we have columns defined
+    if (!visibleColumns.isEmpty()) {
         qDebug() << "Loading columns from settings. Count:" << visibleColumns.size();
         
-        // Only process if we have columns defined
-        if (!visibleColumns.isEmpty()) {
-            foreach(QVariant column, visibleColumns) {
-                int colValue = column.toInt();
-                if (colValue >= 0 && colValue < ColumnCount) {
-                    columns.append(static_cast<RomColumns>(colValue));
-                    qDebug() << "  Loading column:" << colValue << "(" << columnNameFromEnum(static_cast<RomColumns>(colValue)) << ")";
-                }
-            }
-            
-            // Only set columns if we actually loaded valid ones
-            if (!columns.isEmpty()) {
-                m_visibleColumns = columns;
-                qDebug() << "Applied" << columns.size() << "columns from settings";
-                return; // Important: exit here to avoid setting default columns
+        foreach(QVariant column, visibleColumns) {
+            int colValue = column.toInt();
+            if (colValue >= 0 && colValue < ColumnCount) {
+                columns.append(static_cast<RomColumns>(colValue));
+                qDebug() << "  Loading column:" << colValue << "(" 
+                         << columnNameFromEnum(static_cast<RomColumns>(colValue)) << ")";
             }
         }
-        
-        qDebug() << "No valid columns defined in settings, using defaults";
-    } else {
-        qDebug() << "No column settings found, using defaults";
     }
     
-    // Only get here if no valid columns were loaded from settings
-    setDefaultColumns();
-}
-
-// Add a new helper method to set default columns
-void RomListModel::setDefaultColumns()
-{
-    m_visibleColumns = {
-        FileName,
-        GoodName,
-        InternalName,
-        Size,
-        Country,
-        ReleaseDate,
-        Developer,
-        Genre,
-        Players
-    };
-    qDebug() << "Set default columns. Count:" << m_visibleColumns.size();
+    // If we successfully loaded columns, use them; otherwise use defaults
+    if (!columns.isEmpty()) {
+        m_visibleColumns = columns;
+        qDebug() << "Applied" << columns.size() << "columns from settings";
+    } else {
+        qDebug() << "No valid columns defined in settings, using defaults";
+        setDefaultColumns();
+    }
 }
 
 void RomListModel::saveSettings()
 {
-    QSettings settings("Project64", "QtUI");
+    auto& settings = QT_UI::SettingsManager::instance();
     
     // Save view mode
-    settings.setValue("RomBrowser/ViewMode", static_cast<int>(m_currentViewMode));
+    settings.setViewMode(static_cast<SettingsManager::ViewMode>(m_currentViewMode));
     
     // Save grid view settings
-    settings.setValue("RomBrowser/ShowTitles", m_showTitles);
-    settings.setValue("RomBrowser/CoverScale", m_coverScale);
+    settings.setShowTitles(m_showTitles);
+    settings.setCoverScale(m_coverScale);
     
     // Save cover directory
-    settings.setValue("RomBrowser/CoverDirectory", m_coverDirectory);
+    settings.setCoverDirectory(m_coverDirectory);
 }
 
 QIcon QT_UI::RomListModel::getCountryIcon(const QString &countryCode) const

@@ -37,6 +37,8 @@ set(QT_UI_CORE_SOURCES
     Source/Core/RomParser.cpp
     Source/Core/DatabaseManager.h
     Source/Core/DatabaseManager.cpp
+    Source/Core/SettingsManager.h
+    Source/Core/SettingsManager.cpp
 )
 
 set(QT_UI_EMULATION_SOURCES

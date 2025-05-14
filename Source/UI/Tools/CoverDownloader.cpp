@@ -1,4 +1,5 @@
 #include "CoverDownloader.h"
+#include "../../Core/SettingsManager.h"
 
 #include <QSettings>
 #include <QFileDialog>
@@ -109,18 +110,18 @@ CoverDownloader::~CoverDownloader()
 
 void CoverDownloader::saveSettings()
 {
-    QSettings settings("Project64", "Cover Downloader");
-    settings.setValue("UrlTemplates", m_urlTextEdit->toPlainText());
-    settings.setValue("UseTitleNames", m_useTitleNamesCheckBox->isChecked());
-    settings.setValue("OverwriteExisting", m_overwriteExistingCheckBox->isChecked());
+    auto& settings = QT_UI::SettingsManager::instance();
+    settings.setCoverUrlTemplates(m_urlTextEdit->toPlainText());
+    settings.setCoverDownloaderUseTitleNames(m_useTitleNamesCheckBox->isChecked());
+    settings.setCoverDownloaderOverwriteExisting(m_overwriteExistingCheckBox->isChecked());
 }
 
 void CoverDownloader::loadSettings()
 {
-    QSettings settings("Project64", "Cover Downloader");
-    m_urlTextEdit->setPlainText(settings.value("UrlTemplates").toString());
-    m_useTitleNamesCheckBox->setChecked(settings.value("UseTitleNames", false).toBool());
-    m_overwriteExistingCheckBox->setChecked(settings.value("OverwriteExisting", false).toBool());
+    auto& settings = QT_UI::SettingsManager::instance();
+    m_urlTextEdit->setPlainText(settings.coverUrlTemplates());
+    m_useTitleNamesCheckBox->setChecked(settings.coverDownloaderUseTitleNames());
+    m_overwriteExistingCheckBox->setChecked(settings.coverDownloaderOverwriteExisting());
 }
 
 void CoverDownloader::startDownload()
