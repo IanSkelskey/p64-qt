@@ -12,7 +12,8 @@
 #include <QNetworkReply>
 #include <QQueue>
 #include <QMap>
-#include <QRegularExpression> // Add this for Qt6
+#include <QRegularExpression>
+#include "../../Core/DatabaseManager.h" // Changed: full include instead of forward declaration
 
 namespace Ui {
 class CoverDownloaderDialog;
@@ -39,11 +40,11 @@ private:
     void loadSettings();
     void scanRoms();
     void downloadNext();
-    void processCoverDownload(const QByteArray &data, const QString &romId);
-    QString replacePlaceholders(const QString &urlTemplate, const QString &romId, const QString &internalName);
+    void processCoverDownload(const QByteArray &data, const QString &cartridgeCode);
     void updateStatus(const QString &message);
-    QString getCoversDirectory();
-    QString getCoverFilePath(const QString &romId);
+    QString getCoverFilePath(const QString &cartridgeCode, const QString &romName);
+    bool parseRomHeader(const QString &romPath, QString &cartridgeCode, QString &romName);
+    QString replacePlaceholders(const QString &urlTemplate, const QString &cartridgeCode, const QString &romName);
 
     // UI elements
     QTextEdit* m_urlTextEdit;
@@ -57,15 +58,24 @@ private:
     QNetworkAccessManager* m_networkManager;
     
     // Download state
-    QStringList m_urlTemplates;
+    QString m_baseUrl;
     QQueue<QString> m_downloadQueue;
-    QMap<QString, QString> m_romIdToFilename;
-    QString m_currentRomId;
+    QMap<QString, QString> m_cartridgeCodeToRomName;
+    QMap<QString, QString> m_cartridgeCodeToRomPath;
+    QString m_currentCartridgeCode;
     int m_currentRom;
     int m_totalRoms;
     int m_successCount;
     int m_failCount;
     bool m_isDownloading;
+    QStringList m_urlTemplates; // Added back
+
+    // ROM and cover directories
+    QString m_romDirectory;
+    QString m_coverDirectory;
+    
+    // Database manager
+    DatabaseManager* m_dbManager;
 };
 
 } // namespace QT_UI

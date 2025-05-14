@@ -344,8 +344,10 @@ bool RomInfoProvider::getForceFeedback() const
     return m_forceFeedback;
 }
 
-QString RomInfoProvider::getProductID() const
+QString RomInfoProvider::getCartridgeCode() const
 {
+    // Return the cartridge code from the database (stored in m_productID)
+    // rather than extracting from ROM header
     return m_productID;
 }
 

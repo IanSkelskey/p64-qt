@@ -118,7 +118,7 @@ QVariant RomListModel::data(const QModelIndex& index, int role) const
         case FilePath: return romInfo.filePath.isEmpty() ? tr("Unknown") : romInfo.filePath;
         case CartID: return romInfo.cartID.isEmpty() ? tr("Unknown") : romInfo.cartID;
         case MediaType: return romInfo.mediaType.isEmpty() ? tr("Unknown") : romInfo.mediaType;
-        case ProductID: return romInfo.productID.isEmpty() ? tr("Unknown") : romInfo.productID;
+        case CartridgeCode: return romInfo.cartridgeCode.isEmpty() ? tr("Unknown") : romInfo.cartridgeCode; // Changed from ProductID & productID
         case ForceFeedback: return romInfo.forceFeedback ? tr("Yes") : tr("No");
         case CICChip: return romInfo.cicChip.isEmpty() ? tr("Unknown") : romInfo.cicChip;
         case Status: return romInfo.status.isEmpty() ? tr("Unknown") : romInfo.status;
@@ -200,7 +200,7 @@ QVariant RomListModel::headerData(int section, Qt::Orientation orientation, int 
     case FilePath: return tr("File Path");
     case CartID: return tr("Cartridge ID");
     case MediaType: return tr("Media");
-    case ProductID: return tr("Product ID");
+    case CartridgeCode: return tr("Cartridge Code"); // Changed from "Product ID"
     case ForceFeedback: return tr("Force Feedback");
     case CICChip: return tr("CIC Chip");
     case Status: return tr("Status");
@@ -433,7 +433,7 @@ QString RomListModel::columnNameFromEnum(RomColumns column) const
     case FilePath: return "FilePath";
     case CartID: return "CartID";
     case MediaType: return "MediaType";
-    case ProductID: return "ProductID";
+    case CartridgeCode: return "CartridgeCode"; // Changed from ProductID
     case ForceFeedback: return "ForceFeedback";
     case CICChip: return "CICChip";
     case Status: return "Status";
@@ -493,15 +493,22 @@ bool RomListModel::loadRomInfo(const QString& filePath, RomInfo& info)
     info.country = provider.getCountryName();
     info.crc1 = QString("0x%1").arg(provider.getCRC1(), 8, 16, QChar('0')).toUpper();
     info.crc2 = QString("0x%1").arg(provider.getCRC2(), 8, 16, QChar('0')).toUpper();
-    info.cartID = provider.getCartID();
+    info.cartID = provider.getCartID(); // Cart ID directly from ROM header
     
     // Get and debug the media type to identify issues
     info.mediaType = provider.getMediaType();
-    qDebug() << "ROM:" << info.fileName << "Media Type:" << info.mediaType;
     
-    // New: Set CIC chip information - Fix the type reference
+    // Additional information from ROM database
+    info.developer = provider.getDeveloper();
+    info.releaseDate = provider.getReleaseDate();
+    info.genre = provider.getGenre();
+    info.players = QString::number(provider.getPlayers());
+    info.cartridgeCode = provider.getCartridgeCode(); // Now correctly gets cartridge_code from database
+    info.forceFeedback = provider.getForceFeedback();
+    
+    // Convert CIC chip enum to string representation
     QT_UI::CICChip cicChip = provider.getCICChip();
-    switch (cicChip) {
+    switch(cicChip) {
         case QT_UI::CIC_NUS_6101:
             info.cicChip = "NUS-6101 (NTSC)";
             break;
@@ -528,15 +535,13 @@ bool RomListModel::loadRomInfo(const QString& filePath, RomInfo& info)
             break;
     }
     
-    // Additional information from ROM database
-    info.developer = provider.getDeveloper();
-    info.releaseDate = provider.getReleaseDate();
-    info.genre = provider.getGenre();
-    info.players = QString::number(provider.getPlayers());
-    info.productID = provider.getProductID();
-    info.forceFeedback = provider.getForceFeedback();
-    info.status = provider.getStatus();  // Get the status
+    info.status = provider.getStatus();
     
+    // Add debug output to verify correct cartridge code retrieval
+    qDebug() << "Loaded ROM:" << info.fileName 
+             << "Cart ID:" << info.cartID
+             << "Cartridge code (from DB):" << info.cartridgeCode;
+             
     // Format the release date nicely if possible (assuming YYYY-MM-DD format)
     if (!info.releaseDate.isEmpty()) {
         QStringList parts = info.releaseDate.split("-");
@@ -723,16 +728,24 @@ bool RomListModel::findAndLoadCoverArt(const QString& romPath, RomInfo& info)
     // Generate possible filenames for the cover
     QStringList possibleNames;
     
-    // 1. Try ProductID if available (highest priority)
-    if (!info.productID.isEmpty()) {
-        // Remove any spaces or hyphens from the ProductID
-        QString cleanProductID = info.productID;
-        cleanProductID.remove(' ').remove('-');
-        possibleNames << cleanProductID;
-        possibleNames << info.productID; // Also try with original format
+    // 1. Try Cartridge Code from database (highest priority)
+    if (!info.cartridgeCode.isEmpty()) {
+        // Remove any spaces or hyphens from the Cartridge Code
+        QString cleanCartridgeCode = info.cartridgeCode;
+        cleanCartridgeCode.remove(' ').remove('-');
+        possibleNames << cleanCartridgeCode;
+        possibleNames << info.cartridgeCode; // Also try with original format
+        
+        // Debug output to verify we're using the correct code
+        qDebug() << "Looking for cover using cartridge code:" << info.cartridgeCode;
     }
     
-    // 2. Try Internal Name
+    // 2. Try Cart ID as fallback (sometimes this might be in filenames)
+    if (!info.cartID.isEmpty() && info.cartID != info.cartridgeCode) {
+        possibleNames << info.cartID;
+    }
+    
+    // 3. Try Internal Name
     if (!internalName.isEmpty()) {
         // Clean up internal name (remove spaces and special characters)
         QString cleanInternalName = internalName;
@@ -740,16 +753,16 @@ bool RomListModel::findAndLoadCoverArt(const QString& romPath, RomInfo& info)
         possibleNames << cleanInternalName;
     }
     
-    // 3. Try by CRC values if available
+    // 4. Try by CRC values if available
     if (!info.crc1.isEmpty() && !info.crc2.isEmpty()) {
         possibleNames << QString("%1-%2").arg(info.crc1).arg(info.crc2);
         possibleNames << QString("%1%2").arg(info.crc1.mid(2)).arg(info.crc2.mid(2)); // Without 0x prefix
     }
     
-    // 4. Try by file name
+    // 5. Try by file name
     possibleNames << baseName;
     
-    // 5. Try by good name
+    // 6. Try by good name
     if (!goodName.isEmpty()) {
         // Try with different variants of the good name
         QString cleanGoodName = goodName;
@@ -762,7 +775,8 @@ bool RomListModel::findAndLoadCoverArt(const QString& romPath, RomInfo& info)
     QStringList extensions = {"png", "jpg", "jpeg"};
     
     qDebug() << "Looking for cover art for ROM:" << info.fileName;
-    qDebug() << "ProductID:" << info.productID << "Internal Name:" << internalName;
+    qDebug() << "Cartridge code (from database):" << info.cartridgeCode;
+    qDebug() << "Cart ID (from ROM header):" << info.cartID;
     qDebug() << "Possible names to try:" << possibleNames;
     
     for (const QString& name : possibleNames) {

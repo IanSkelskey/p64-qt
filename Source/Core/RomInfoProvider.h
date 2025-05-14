@@ -40,7 +40,7 @@ public:
     QString getGenre() const;
     int getPlayers() const;
     bool getForceFeedback() const;
-    QString getProductID() const;
+    QString getCartridgeCode() const; // Changed from getProductID()
     QString getStatus() const;  // New method to get compatibility status
     
     // Add a method to get the detected ROM format

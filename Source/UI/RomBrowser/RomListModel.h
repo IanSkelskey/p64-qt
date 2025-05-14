@@ -33,9 +33,9 @@ struct RomInfo {
     QString filePath;
     QString cartID;
     QString mediaType;
-    QString productID;  // Added ProductID field
-    QString cicChip;    // Added CIC Chip field
-    QString status;     // Added Status field
+    QString cartridgeCode;  // Changed from productID
+    QString cicChip;
+    QString status;
     QIcon icon;
     bool isGoodDump;
     bool forceFeedback; // Added Force Feedback field
@@ -74,7 +74,7 @@ public:
         FilePath,
         CartID,
         MediaType,
-        ProductID,     // New column for Product ID
+        CartridgeCode,     // Changed from ProductID
         ForceFeedback, // New column for Force Feedback
         CICChip,       // New column for CIC Chip
         Status,        // New column for compatibility status

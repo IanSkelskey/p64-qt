@@ -1,5 +1,6 @@
 #include "CoverDownloader.h"
 #include "../../Core/SettingsManager.h"
+#include "../../Core/RomParser.h"
 
 #include <QSettings>
 #include <QFileDialog>
@@ -13,6 +14,10 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QRegularExpression>
+#include <QDirIterator>
+#include <QFile>
+#include <QFileInfo>
+#include <QApplication>
 
 namespace QT_UI {
 
@@ -23,7 +28,8 @@ CoverDownloader::CoverDownloader(QWidget *parent) :
     m_totalRoms(0),
     m_successCount(0),
     m_failCount(0),
-    m_isDownloading(false)
+    m_isDownloading(false),
+    m_dbManager(nullptr)
 {
     setupUi();
     
@@ -32,12 +38,35 @@ CoverDownloader::CoverDownloader(QWidget *parent) :
     
     loadSettings();
     
+    // Set the default base URL for GitHub repository
+    m_baseUrl = "https://raw.githubusercontent.com/IanSkelskey/n64-covers/refs/heads/main/labels/";
+    
+    // Create database manager instance
+    QString dbPath = QDir(QApplication::applicationDirPath()).filePath("database.sqlite");
+    m_dbManager = new DatabaseManager(dbPath);
+    
+    if (!m_dbManager->open()) {
+        qWarning() << "Failed to open ROM database";
+    }
+    
     // Create covers directory if it doesn't exist
     QDir dir;
-    dir.mkpath(getCoversDirectory());
+    dir.mkpath(m_coverDirectory);
     
     m_progressBar->setValue(0);
     m_startButton->setEnabled(true);
+}
+
+CoverDownloader::~CoverDownloader()
+{
+    if (m_isDownloading) {
+        saveSettings();
+    }
+    
+    if (m_dbManager) {
+        m_dbManager->close();
+        delete m_dbManager;
+    }
 }
 
 void CoverDownloader::setupUi()
@@ -47,15 +76,15 @@ void CoverDownloader::setupUi()
     
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     
-    // URL Templates group
+    // URL Templates group - RESTORED
     QGroupBox* urlGroup = new QGroupBox(tr("URL Templates"), this);
     QVBoxLayout* urlLayout = new QVBoxLayout(urlGroup);
     
-    QLabel* urlLabel = new QLabel(tr("Enter URL templates with ${rom_id}, ${internal_name}, or ${rom_name} placeholders:"), this);
+    QLabel* urlLabel = new QLabel(tr("Enter URL templates with ${cartridge_code}, ${internal_name}, or ${rom_name} placeholders:"), this);
     urlLayout->addWidget(urlLabel);
     
     m_urlTextEdit = new QTextEdit(this);
-    m_urlTextEdit->setPlaceholderText(tr("https://example.com/covers/${rom_id}.png"));
+    m_urlTextEdit->setPlaceholderText(tr("https://example.com/covers/${cartridge_code}.png"));
     urlLayout->addWidget(m_urlTextEdit);
     
     mainLayout->addWidget(urlGroup);
@@ -101,13 +130,6 @@ void CoverDownloader::setupUi()
     setLayout(mainLayout);
 }
 
-CoverDownloader::~CoverDownloader()
-{
-    if (m_isDownloading) {
-        saveSettings();
-    }
-}
-
 void CoverDownloader::saveSettings()
 {
     auto& settings = QT_UI::SettingsManager::instance();
@@ -119,9 +141,182 @@ void CoverDownloader::saveSettings()
 void CoverDownloader::loadSettings()
 {
     auto& settings = QT_UI::SettingsManager::instance();
+    
+    // Get ROM and cover directories from SettingsManager
+    m_romDirectory = settings.lastRomDirectory();
+    m_coverDirectory = settings.coverDirectory();
+    
+    // Load user preferences
     m_urlTextEdit->setPlainText(settings.coverUrlTemplates());
     m_useTitleNamesCheckBox->setChecked(settings.coverDownloaderUseTitleNames());
     m_overwriteExistingCheckBox->setChecked(settings.coverDownloaderOverwriteExisting());
+}
+
+bool CoverDownloader::parseRomHeader(const QString &romPath, QString &cartridgeCode, QString &romName)
+{
+    // Open the ROM file and read its header
+    QFile file(romPath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "Failed to open ROM file:" << romPath;
+        return false;
+    }
+    
+    // Read first 4KB of the ROM (should be enough for header)
+    QByteArray headerData = file.read(4096);
+    file.close();
+    
+    // Parse ROM header using RomParser
+    RomParser parser;
+    if (!parser.setRomData(headerData)) {
+        qWarning() << "Failed to parse ROM header:" << romPath;
+        return false;
+    }
+    
+    // Get the cartridge ID from ROM header (for database lookup)
+    QString cartridgeID = parser.extractCartID();
+    if (cartridgeID.isEmpty()) {
+        qWarning() << "No cartridge ID found in ROM:" << romPath;
+        return false;
+    }
+    
+    // Get the internal name for the ROM
+    romName = parser.extractInternalName();
+    if (romName.isEmpty()) {
+        // Fallback to the file name without extension
+        QFileInfo fileInfo(romPath);
+        romName = fileInfo.completeBaseName();
+    }
+    
+    // Calculate CRC values for database lookup
+    uint32_t crc1 = 0, crc2 = 0;
+    parser.calculateCRC(crc1, crc2);
+    
+    // Get country code byte from ROM header for database lookup
+    unsigned char countryByte = parser.getRawCountryByte();
+    QString countryHex = QString::number(countryByte, 16).toUpper().rightJustified(2, '0');
+    
+    // Get full cartridge code from database using ROM ID info
+    cartridgeCode = cartridgeID; // Default to ROM header cartridge ID if database lookup fails
+    
+    if (m_dbManager && m_dbManager->isDatabaseLoaded()) {
+        // Try to get cartridge code from database using CRC values first (most accurate)
+        std::map<QString, QVariant> romInfo = m_dbManager->getRomBrowserEntryByCRC(crc1, crc2, countryHex);
+        
+        if (!romInfo.empty() && romInfo.count("cartridge_code") && romInfo["cartridge_code"].isValid()) {
+            // Use the official cartridge code from database
+            cartridgeCode = romInfo["cartridge_code"].toString();
+            qDebug() << "Found cartridge code in database:" << cartridgeCode << "for ROM ID:" << cartridgeID;
+            
+            // Also update the ROM name if available
+            if (romInfo.count("good_name") && romInfo["good_name"].isValid() && !romInfo["good_name"].toString().isEmpty()) {
+                romName = romInfo["good_name"].toString();
+            }
+            
+            return true;
+        }
+        
+        // Fallback: try lookup by cartridge ID from ROM header
+        romInfo = m_dbManager->getRomInfoByCartridgeCode(cartridgeID);
+        if (!romInfo.empty() && romInfo.count("cartridge_code") && romInfo["cartridge_code"].isValid()) {
+            cartridgeCode = romInfo["cartridge_code"].toString();
+            qDebug() << "Found cartridge code by ID lookup:" << cartridgeCode;
+            
+            // Also update the ROM name if available
+            if (romInfo.count("good_name") && romInfo["good_name"].isValid() && !romInfo["good_name"].toString().isEmpty()) {
+                romName = romInfo["good_name"].toString();
+            }
+        }
+    }
+    
+    qDebug() << "Using cartridge code:" << cartridgeCode << "for" << romName;
+    return true;
+}
+
+void CoverDownloader::scanRoms()
+{
+    // Clear previous data
+    m_downloadQueue.clear();
+    m_cartridgeCodeToRomName.clear();
+    m_cartridgeCodeToRomPath.clear();
+    
+    if (m_romDirectory.isEmpty() || !QDir(m_romDirectory).exists()) {
+        updateStatus(tr("Invalid ROM directory. Please set a valid ROM directory."));
+        return;
+    }
+    
+    updateStatus(tr("Scanning for ROMs in %1...").arg(m_romDirectory));
+    
+    // Scan ROM directory for N64 ROMs
+    QStringList romExtensions = {"*.z64", "*.v64", "*.n64", "*.zip"};
+    QDir romDir(m_romDirectory);
+    QStringList romFiles = romDir.entryList(romExtensions, QDir::Files);
+    
+    auto& settings = QT_UI::SettingsManager::instance();
+    bool recursive = settings.recursiveScan();
+    
+    // Process files found in the main directory
+    for (const QString& romFileName : romFiles) {
+        QString romPath = romDir.filePath(romFileName);
+        
+        QString cartridgeCode, romName;
+        if (parseRomHeader(romPath, cartridgeCode, romName)) {
+            // The cartridge code should now come from the database if available
+            
+            // Add to our maps
+            m_cartridgeCodeToRomName[cartridgeCode] = romName;
+            m_cartridgeCodeToRomPath[cartridgeCode] = romPath;
+            
+            // Check if cover exists
+            QString coverPath = getCoverFilePath(cartridgeCode, romName);
+            
+            // Add to download queue if needed
+            bool needsDownload = !QFile::exists(coverPath) || m_overwriteExistingCheckBox->isChecked();
+            if (needsDownload) {
+                m_downloadQueue.enqueue(cartridgeCode);
+            }
+        }
+    }
+    
+    // Also check recursively if enabled
+    if (recursive) {
+        QDirIterator it(m_romDirectory, romExtensions, QDir::Files, QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            QString romPath = it.next();
+            
+            // Skip files we've already processed from the main directory
+            if (m_cartridgeCodeToRomPath.values().contains(romPath)) {
+                continue;
+            }
+            
+            QString cartridgeCode, romName;
+            if (parseRomHeader(romPath, cartridgeCode, romName)) {
+                // Get additional info from database if available
+                if (m_dbManager && m_dbManager->isDatabaseLoaded()) {
+                    std::map<QString, QVariant> romInfo = m_dbManager->getRomInfoByCartridgeCode(cartridgeCode);
+                    if (!romInfo.empty() && romInfo.count("good_name") && !romInfo["good_name"].toString().isEmpty()) {
+                        romName = romInfo["good_name"].toString();
+                    }
+                }
+                
+                // Add to our maps
+                m_cartridgeCodeToRomName[cartridgeCode] = romName;
+                m_cartridgeCodeToRomPath[cartridgeCode] = romPath;
+                
+                // Check if cover exists
+                QString coverPath = getCoverFilePath(cartridgeCode, romName);
+                
+                // Add to download queue if needed
+                bool needsDownload = !QFile::exists(coverPath) || m_overwriteExistingCheckBox->isChecked();
+                if (needsDownload) {
+                    m_downloadQueue.enqueue(cartridgeCode);
+                }
+            }
+        }
+    }
+    
+    updateStatus(tr("Found %1 ROMs. %2 covers need to be downloaded.")
+                .arg(m_cartridgeCodeToRomName.size())
+                .arg(m_downloadQueue.size()));
 }
 
 void CoverDownloader::startDownload()
@@ -176,35 +371,6 @@ void CoverDownloader::startDownload()
     downloadNext();
 }
 
-void CoverDownloader::scanRoms()
-{
-    // TODO: Implement scanning of ROMs in the configured ROM directory
-    // This is a placeholder implementation
-    
-    // Clear previous data
-    m_downloadQueue.clear();
-    m_romIdToFilename.clear();
-    
-    // Placeholder: Populate with sample ROM IDs
-    // In a real implementation, this would scan the ROM directory and extract ROM IDs
-    m_romIdToFilename["NZLE"] = "The Legend of Zelda - Ocarina of Time"; // Example: Zelda OOT
-    m_romIdToFilename["NSMB"] = "Super Mario 64"; // Example: Super Mario 64
-    m_romIdToFilename["NK4E"] = "Mario Kart 64"; // Example: Mario Kart 64
-    
-    // Add ROMs to download queue that don't have covers yet
-    for (auto it = m_romIdToFilename.constBegin(); it != m_romIdToFilename.constEnd(); ++it) {
-        QString romId = it.key();
-        QString coverPath = getCoverFilePath(romId);
-        
-        // Check if cover exists and if we should overwrite
-        bool needsDownload = !QFile::exists(coverPath) || m_overwriteExistingCheckBox->isChecked();
-        
-        if (needsDownload) {
-            m_downloadQueue.enqueue(romId);
-        }
-    }
-}
-
 void CoverDownloader::downloadNext()
 {
     if (m_downloadQueue.isEmpty() || !m_isDownloading) {
@@ -215,23 +381,27 @@ void CoverDownloader::downloadNext()
         return;
     }
     
-    m_currentRomId = m_downloadQueue.dequeue();
+    m_currentCartridgeCode = m_downloadQueue.dequeue();
     m_currentRom++;
     
     // Display progress
     m_progressBar->setValue(m_currentRom);
     
-    // Get internal name (use filename in this example)
-    QString internalName = m_romIdToFilename.value(m_currentRomId);
+    // Get ROM name
+    QString romName = m_cartridgeCodeToRomName.value(m_currentCartridgeCode, "Unknown");
     
     // Try each URL template
     bool requestSent = false;
     for (const QString &urlTemplate : m_urlTemplates) {
-        QString url = replacePlaceholders(urlTemplate, m_currentRomId, internalName);
+        QString url = replacePlaceholders(urlTemplate, m_currentCartridgeCode, romName);
         if (!url.isEmpty()) {
-            updateStatus(tr("Downloading cover for %1 (%2/%3)").arg(internalName).arg(m_currentRom).arg(m_totalRoms));
+            updateStatus(tr("Downloading cover for %1 (%2) - %3/%4")
+                        .arg(romName)
+                        .arg(m_currentCartridgeCode)
+                        .arg(m_currentRom)
+                        .arg(m_totalRoms));
             
-            // Fix vexing parse issue with curly braces
+            // Create network request
             QNetworkRequest request{QUrl(url)};
             QNetworkReply *reply = m_networkManager->get(request);
             
@@ -242,6 +412,21 @@ void CoverDownloader::downloadNext()
         }
     }
     
+    // If no template worked, try the default GitHub URL as fallback
+    if (!requestSent && !m_baseUrl.isEmpty()) {
+        QString url = m_baseUrl + m_currentCartridgeCode;
+        updateStatus(tr("Trying default URL for %1 (%2) - %3/%4")
+                    .arg(romName)
+                    .arg(m_currentCartridgeCode)
+                    .arg(m_currentRom)
+                    .arg(m_totalRoms));
+                    
+        QNetworkRequest request{QUrl(url)};
+        QNetworkReply *reply = m_networkManager->get(request);
+        connect(reply, &QNetworkReply::downloadProgress, this, &CoverDownloader::onDownloadProgress);
+        requestSent = true;
+    }
+    
     if (!requestSent) {
         // Failed to create a valid URL, skip this ROM
         m_failCount++;
@@ -249,14 +434,28 @@ void CoverDownloader::downloadNext()
     }
 }
 
+QString CoverDownloader::replacePlaceholders(const QString &urlTemplate, const QString &cartridgeCode, const QString &romName)
+{
+    QString url = urlTemplate;
+    url.replace("${cartridge_code}", cartridgeCode);
+    url.replace("${internal_name}", romName); // Using the ROM name as internal name
+    url.replace("${rom_name}", romName);
+    
+    // Legacy support for older placeholder formats
+    url.replace("${rom_id}", cartridgeCode);
+    url.replace("${product_id}", cartridgeCode);
+    
+    return url;
+}
+
 void CoverDownloader::downloadFinished(QNetworkReply *reply)
 {
     if (reply->error() == QNetworkReply::NoError) {
         QByteArray data = reply->readAll();
-        processCoverDownload(data, m_currentRomId);
+        processCoverDownload(data, m_currentCartridgeCode);
         m_successCount++;
     } else {
-        qDebug() << "Download error:" << reply->errorString();
+        qDebug() << "Download error for" << m_currentCartridgeCode << ":" << reply->errorString();
         m_failCount++;
     }
     
@@ -266,12 +465,20 @@ void CoverDownloader::downloadFinished(QNetworkReply *reply)
     downloadNext();
 }
 
-void CoverDownloader::processCoverDownload(const QByteArray &data, const QString &romId)
+void CoverDownloader::processCoverDownload(const QByteArray &data, const QString &cartridgeCode)
 {
     QPixmap pixmap;
+    QString romName = m_cartridgeCodeToRomName.value(cartridgeCode, "Unknown");
+    
     if (pixmap.loadFromData(data)) {
         // Save the image
-        QString filePath = getCoverFilePath(romId);
+        QString filePath = getCoverFilePath(cartridgeCode, romName);
+        
+        // Ensure the directory exists
+        QFileInfo fileInfo(filePath);
+        QDir dir;
+        dir.mkpath(fileInfo.absolutePath());
+        
         if (pixmap.save(filePath)) {
             qDebug() << "Cover saved to" << filePath;
         } else {
@@ -280,61 +487,54 @@ void CoverDownloader::processCoverDownload(const QByteArray &data, const QString
             m_successCount--; // Revert the increment from downloadFinished
         }
     } else {
-        qDebug() << "Invalid image data received";
+        qDebug() << "Invalid image data received for" << cartridgeCode;
         m_failCount++;
         m_successCount--; // Revert the increment from downloadFinished
     }
-}
-
-QString CoverDownloader::replacePlaceholders(const QString &urlTemplate, const QString &romId, const QString &internalName)
-{
-    QString url = urlTemplate;
-    url.replace("${internal_name}", internalName);
-    url.replace("${rom_id}", romId);
-    url.replace("${rom_name}", internalName); // In this simple example, use internal name as filename
-    
-    return url;
 }
 
 void CoverDownloader::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
 {
     if (bytesTotal > 0) {
         int percent = static_cast<int>((bytesReceived * 100) / bytesTotal);
-        updateStatus(tr("Downloading cover for %1 (%2/%3) - %4%")
-                    .arg(m_romIdToFilename.value(m_currentRomId))
+        QString romName = m_cartridgeCodeToRomName.value(m_currentCartridgeCode, "Unknown");
+        
+        updateStatus(tr("Downloading cover for %1 (%2) - %3/%4 - %5%")
+                    .arg(romName)
+                    .arg(m_currentCartridgeCode)
                     .arg(m_currentRom)
                     .arg(m_totalRoms)
                     .arg(percent));
     }
 }
 
-void CoverDownloader::updateStatus(const QString &message)
-{
-    m_statusLabel->setText(message);
-}
-
-QString CoverDownloader::getCoversDirectory()
-{
-    // Get the default covers directory
-    // In a real implementation, this would come from project settings
-    QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    return appDataPath + "/Covers";
-}
-
-QString CoverDownloader::getCoverFilePath(const QString &romId)
+QString CoverDownloader::getCoverFilePath(const QString &cartridgeCode, const QString &romName)
 {
     QString filename;
-    if (m_useTitleNamesCheckBox->isChecked()) {
-        filename = m_romIdToFilename.value(romId);
+    
+    // Use either the ROM name or cartridge code based on user preference
+    if (m_useTitleNamesCheckBox->isChecked() && !romName.isEmpty()) {
+        filename = romName;
     } else {
-        filename = romId;
+        filename = cartridgeCode;
     }
     
     // Ensure filename is valid for the filesystem
-    // Replace QRegExp with QRegularExpression for Qt6
     filename = filename.replace(QRegularExpression("[\\\\/:*?\"<>|]"), "_");
     
-    return getCoversDirectory() + "/" + filename + ".png";
+    // Make sure cover directory ends with a slash
+    QString coverDir = m_coverDirectory;
+    if (!coverDir.endsWith('/') && !coverDir.endsWith('\\')) {
+        coverDir += '/';
+    }
+    
+    return coverDir + filename + ".png";
+}
+
+void CoverDownloader::updateStatus(const QString &message)
+{
+    m_statusLabel->setText(message);
+    qDebug() << message; // Log status messages
 }
 
 } // namespace QT_UI
