@@ -6,6 +6,7 @@
 #include <QStyle>
 #include <QPalette>
 #include <QStyleFactory>
+#include <QIcon>
 
 namespace QT_UI {
 
@@ -25,6 +26,10 @@ public:
     Theme currentTheme() const { return m_currentTheme; }
     bool setTheme(Theme theme);
     bool isDarkMode() const;
+    
+    // New methods for icon theme management
+    void updateIconTheme();
+    static bool isCurrentlyDarkTheme();
 
 signals:
     void themeChanged(Theme newTheme);

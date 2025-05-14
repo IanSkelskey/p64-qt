@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QWidget> // Add this include for QWidget class definition
 #include <QStyle> // Add this include for style methods
+#include <QIcon> // Add this include for QIcon
 
 #ifdef Q_OS_WIN
 #include <Windows.h>
@@ -66,6 +67,9 @@ ThemeManager::ThemeManager(QObject* parent)
         applySystemTheme();
         break;
     }
+    
+    // Initialize icon theme
+    updateIconTheme();
 }
 
 bool ThemeManager::setTheme(Theme theme)
@@ -88,6 +92,9 @@ bool ThemeManager::setTheme(Theme theme)
         applySystemTheme();
         break;
     }
+    
+    // Update icon theme when the application theme changes
+    updateIconTheme();
     
     saveThemeSettings(theme);
     emit themeChanged(theme);
@@ -235,6 +242,18 @@ void ThemeManager::saveThemeSettings(Theme theme)
     // Use centralized SettingsManager instead of direct QSettings
     QT_UI::SettingsManager::instance().setTheme(
         static_cast<QT_UI::SettingsManager::Theme>(theme));
+}
+
+// New method to update icon theme based on current application theme
+void ThemeManager::updateIconTheme()
+{
+    // Update the icon theme based on current dark/light mode
+    QIcon::setThemeName(isDarkMode() ? "white" : "black");
+}
+
+bool ThemeManager::isCurrentlyDarkTheme()
+{
+    return ThemeManager::instance().isDarkMode();
 }
 
 } // namespace QT_UI

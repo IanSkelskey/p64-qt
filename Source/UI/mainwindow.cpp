@@ -9,6 +9,7 @@
 #include "About/AboutDialog.h"
 #include "Tools/CoverDownloader.h"
 #include "Theme/ThemeManager.h"
+#include "Theme/IconHelper.h"
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -42,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Set up the basic window properties instead of using UI
     // ui->setupUi(this);
     setWindowTitle("Project64");
-    setWindowIcon(QIcon(":/assets/icons/pj64.ico"));
+    setWindowIcon(QIcon(":/icons/pj64.ico"));
     resize(800, 600);
     setMinimumSize(640, 480);
     
@@ -85,6 +86,18 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Update UI state after initialization
     updateUIState(false);
+    
+    // Connect theme change signal to update UI
+    connect(&QT_UI::ThemeManager::instance(), &QT_UI::ThemeManager::themeChanged,
+            this, [this](QT_UI::ThemeManager::Theme theme) {
+                // Update UI when theme changes
+                createMenuBar(); // Recreate menu with correct icons
+                
+                // Make sure the ROM browser updates its styles
+                if (romBrowserWidget) {
+                    romBrowserWidget->setupStatusArea();
+                }
+            });
 }
 
 void MainWindow::createMenuBar()
@@ -122,33 +135,33 @@ void MainWindow::createMenuBar()
     QMenu* fileMenu = mainMenuBar->addMenu(tr("&File"));
     
     // Create file menu actions with theme icons
-    QAction* openRomAction = new QAction(QIcon::fromTheme("document-open"), tr("Open ROM"), this);
+    QAction* openRomAction = new QAction(QT_UI::IconHelper::getOpenIcon(), tr("Open ROM"), this);
     openRomAction->setShortcut(QKeySequence("Ctrl+O"));
     connect(openRomAction, &QAction::triggered, this, &MainWindow::onOpenROM);
     
-    QAction* openComboAction = new QAction(tr("Open Combo"), this);
+    QAction* openComboAction = new QAction(QT_UI::IconHelper::getFolderIcon(), tr("Open Combo"), this);
     openComboAction->setShortcut(QKeySequence("Ctrl+Shift+O"));
     
-    QAction* romInfoAction = new QAction(tr("ROM Info..."), this);
+    QAction* romInfoAction = new QAction(QT_UI::IconHelper::getRomInfoIcon(), tr("ROM Info..."), this);
     romInfoAction->setEnabled(false);
     
-    QAction* startEmulationAction = new QAction(QIcon::fromTheme("media-playback-start"), tr("Start Emulation"), this);
+    QAction* startEmulationAction = new QAction(QT_UI::IconHelper::getPlayIcon(), tr("Start Emulation"), this);
     startEmulationAction->setShortcut(QKeySequence("F11"));
     startEmulationAction->setEnabled(false);
     connect(startEmulationAction, &QAction::triggered, this, &MainWindow::onStartEmulation);
     
-    QAction* endEmulationAction = new QAction(QIcon::fromTheme("media-playback-stop"), tr("End Emulation"), this);
+    QAction* endEmulationAction = new QAction(QT_UI::IconHelper::getStopIcon(), tr("End Emulation"), this);
     endEmulationAction->setEnabled(false);
     connect(endEmulationAction, &QAction::triggered, this, &MainWindow::onEndEmulation);
     
-    QAction* chooseRomDirAction = new QAction(QIcon::fromTheme("folder-open"), tr("Choose ROM Directory..."), this);
+    QAction* chooseRomDirAction = new QAction(QT_UI::IconHelper::getFolderSettingsIcon(), tr("Choose ROM Directory..."), this);
     connect(chooseRomDirAction, &QAction::triggered, this, &MainWindow::onChooseRomDirectory);
     
-    QAction* refreshRomListAction = new QAction(QIcon::fromTheme("view-refresh"), tr("Refresh ROM List"), this);
+    QAction* refreshRomListAction = new QAction(QT_UI::IconHelper::getRefreshIcon(), tr("Refresh ROM List"), this);
     refreshRomListAction->setShortcut(QKeySequence("F5"));
     connect(refreshRomListAction, &QAction::triggered, this, &MainWindow::onRefreshRomList);
     
-    QAction* exitAction = new QAction(QIcon::fromTheme("application-exit"), tr("Exit"), this);
+    QAction* exitAction = new QAction(QT_UI::IconHelper::getExitIcon(), tr("Exit"), this);
     connect(exitAction, &QAction::triggered, this, &MainWindow::onExit);
     
     // Add actions to file menu
@@ -162,6 +175,7 @@ void MainWindow::createMenuBar()
     
     // Add Language submenu
     QMenu* languageMenu = fileMenu->addMenu(tr("Language"));
+    languageMenu->setIcon(QT_UI::IconHelper::getGlobalIcon());
     QAction* availableLanguagesAction = new QAction(tr("(Available Languages)"), this);
     languageMenu->addAction(availableLanguagesAction);
     
@@ -172,11 +186,13 @@ void MainWindow::createMenuBar()
     
     // Add Recent ROM submenu
     QMenu* recentRomMenu = fileMenu->addMenu(tr("Recent ROM"));
+    recentRomMenu->setIcon(QT_UI::IconHelper::getRecentIcon());
     QAction* recentRomsAction = new QAction(tr("(Recent ROMs)"), this);
     recentRomMenu->addAction(recentRomsAction);
     
     // Add Recent ROM Directories submenu
     QMenu* recentRomDirsMenu = fileMenu->addMenu(tr("Recent ROM Directories"));
+    recentRomDirsMenu->setIcon(QT_UI::IconHelper::getFolderIcon());
     QAction* recentRomDirsAction = new QAction(tr("(Recent ROM Directories)"), this);
     recentRomDirsMenu->addAction(recentRomDirsAction);
     
@@ -186,37 +202,37 @@ void MainWindow::createMenuBar()
     // Create Options menu
     QMenu* optionsMenu = mainMenuBar->addMenu(tr("Options"));
     
-    QAction* fullscreenAction = new QAction(QIcon::fromTheme("view-fullscreen"), tr("Fullscreen"), this);
+    QAction* fullscreenAction = new QAction(QT_UI::IconHelper::getFullscreenIcon(), tr("Fullscreen"), this);
     fullscreenAction->setShortcut(QKeySequence("Alt+Return"));
     fullscreenAction->setEnabled(false);
     connect(fullscreenAction, &QAction::triggered, this, &MainWindow::onToggleFullscreen);
     
-    QAction* alwaysOnTopAction = new QAction(tr("Always on top"), this);
+    QAction* alwaysOnTopAction = new QAction(QT_UI::IconHelper::getPinIcon(), tr("Always on top"), this);
     alwaysOnTopAction->setCheckable(true);
     alwaysOnTopAction->setEnabled(false);
     connect(alwaysOnTopAction, &QAction::triggered, this, &MainWindow::onToggleAlwaysOnTop);
     
-    QAction* graphicsSettingsAction = new QAction(QIcon::fromTheme("image-x-generic"), tr("Graphics Settings"), this);
+    QAction* graphicsSettingsAction = new QAction(QT_UI::IconHelper::getGraphicsIcon(), tr("Graphics Settings"), this);
     graphicsSettingsAction->setEnabled(false);
     connect(graphicsSettingsAction, &QAction::triggered, this, &MainWindow::onGraphicsSettings);
     
-    QAction* audioSettingsAction = new QAction(QIcon::fromTheme("audio-card"), tr("Audio Settings"), this);
+    QAction* audioSettingsAction = new QAction(QT_UI::IconHelper::getAudioIcon(), tr("Audio Settings"), this);
     audioSettingsAction->setEnabled(false);
     connect(audioSettingsAction, &QAction::triggered, this, &MainWindow::onAudioSettings);
     
-    QAction* rspSettingsAction = new QAction(tr("RSP Settings"), this);
+    QAction* rspSettingsAction = new QAction(QT_UI::IconHelper::getRspIcon(), tr("RSP Settings"), this);
     rspSettingsAction->setEnabled(false);
     connect(rspSettingsAction, &QAction::triggered, this, &MainWindow::onRSPSettings);
     
-    QAction* inputSettingsAction = new QAction(QIcon::fromTheme("input-gaming"), tr("Input Settings"), this);
+    QAction* inputSettingsAction = new QAction(QT_UI::IconHelper::getControllerIcon(), tr("Input Settings"), this);
     inputSettingsAction->setEnabled(false);
     connect(inputSettingsAction, &QAction::triggered, this, &MainWindow::onInputSettings);
     
-    QAction* showCpuStatsAction = new QAction(QIcon::fromTheme("computer"), tr("Show CPU Stats"), this);
+    QAction* showCpuStatsAction = new QAction(QT_UI::IconHelper::getStatisticsIcon(), tr("Show CPU Stats"), this);
     showCpuStatsAction->setCheckable(true);
     connect(showCpuStatsAction, &QAction::triggered, this, &MainWindow::onShowCPUStats);
     
-    QAction* configAction = new QAction(QIcon::fromTheme("preferences-system"), tr("Configuration"), this);
+    QAction* configAction = new QAction(QT_UI::IconHelper::getSettingsIcon(), tr("Configuration"), this);
     connect(configAction, &QAction::triggered, this, &MainWindow::onConfiguration);
     
     optionsMenu->addAction(fullscreenAction);
@@ -231,18 +247,18 @@ void MainWindow::createMenuBar()
     optionsMenu->addAction(configAction);
     
     // Create Debugger menu
-    QMenu* debuggerMenu = mainMenuBar->addMenu(QIcon::fromTheme("tools-report-bug"), tr("&Debugger"));
+    QMenu* debuggerMenu = mainMenuBar->addMenu(tr("&Debugger"));
     
     // Create View menu
-    QMenu* viewMenu = mainMenuBar->addMenu(QIcon::fromTheme("preferences-desktop-display"), tr("&View"));
+    QMenu* viewMenu = mainMenuBar->addMenu(tr("&View"));
     
     // Create view mode actions if they don't exist
-    detailViewAction = new QAction(tr("&Detail View"), this);
+    detailViewAction = new QAction(QT_UI::IconHelper::getDetailViewIcon(), tr("&Detail View"), this);
     detailViewAction->setCheckable(true);
     detailViewAction->setChecked(true);
     connect(detailViewAction, &QAction::triggered, this, &MainWindow::onSetDetailView);
     
-    gridViewAction = new QAction(tr("&Grid View"), this);
+    gridViewAction = new QAction(QT_UI::IconHelper::getGridViewIcon(), tr("&Grid View"), this);
     gridViewAction->setCheckable(true);
     connect(gridViewAction, &QAction::triggered, this, &MainWindow::onSetGridView);
     
@@ -255,7 +271,7 @@ void MainWindow::createMenuBar()
     viewMenu->addAction(gridViewAction);
     
     // Add Show Titles action
-    showTitlesAction = new QAction(tr("Show &Titles"), this);
+    showTitlesAction = new QAction(QT_UI::IconHelper::getShowTitlesIcon(), tr("Show &Titles"), this);
     showTitlesAction->setCheckable(true);
     showTitlesAction->setChecked(true);
     connect(showTitlesAction, &QAction::triggered, this, &MainWindow::onToggleShowTitles);
@@ -264,7 +280,7 @@ void MainWindow::createMenuBar()
     viewMenu->addSeparator();
     
     // Add Theme submenu
-    QMenu* themeMenu = viewMenu->addMenu(QIcon::fromTheme("preferences-desktop-theme"), tr("Theme"));
+    QMenu* themeMenu = viewMenu->addMenu(QT_UI::IconHelper::getThemeIcon(), tr("Theme"));
     
     // Create action group for theme selection (mutually exclusive)
     QActionGroup* themeGroup = new QActionGroup(this);
@@ -305,25 +321,25 @@ void MainWindow::createMenuBar()
     themeMenu->addAction(useSystemPrefsAction);
     
     // Create Tools menu
-    QMenu* toolsMenu = mainMenuBar->addMenu(QIcon::fromTheme("applications-utilities"), tr("Tools"));
+    QMenu* toolsMenu = mainMenuBar->addMenu(tr("Tools"));
     
-    QAction* coverDownloaderAction = new QAction(QIcon::fromTheme("go-down"), tr("Cover Downloader"), this);
+    QAction* coverDownloaderAction = new QAction(QT_UI::IconHelper::getDownloadIcon(), tr("Cover Downloader"), this);
     connect(coverDownloaderAction, &QAction::triggered, this, &MainWindow::onCoverDownloader);
     toolsMenu->addAction(coverDownloaderAction);
     
     // Create Help menu
-    QMenu* helpMenu = mainMenuBar->addMenu(QIcon::fromTheme("help-contents"), tr("Help"));
+    QMenu* helpMenu = mainMenuBar->addMenu(tr("Help"));
     
-    QAction* supportAction = new QAction(tr("Support Project64"), this);
+    QAction* supportAction = new QAction(QT_UI::IconHelper::getSupportIcon(), tr("Support Project64"), this);
     connect(supportAction, &QAction::triggered, this, &MainWindow::onSupportProject64);
     
-    QAction* discordAction = new QAction(tr("Discord"), this);
+    QAction* discordAction = new QAction(QT_UI::IconHelper::getDiscordIcon(), tr("Discord"), this);
     connect(discordAction, &QAction::triggered, this, &MainWindow::onDiscord);
     
-    QAction* websiteAction = new QAction(tr("Website"), this);
+    QAction* websiteAction = new QAction(QT_UI::IconHelper::getWebsiteIcon(), tr("Website"), this);
     connect(websiteAction, &QAction::triggered, this, &MainWindow::onWebsite);
     
-    QAction* aboutAction = new QAction(QIcon::fromTheme("help-about"), tr("About Project64"), this);
+    QAction* aboutAction = new QAction(QT_UI::IconHelper::getAboutIcon(), tr("About Project64"), this);
     connect(aboutAction, &QAction::triggered, this, &MainWindow::onAbout);
     
     helpMenu->addAction(supportAction);
@@ -332,8 +348,16 @@ void MainWindow::createMenuBar()
     helpMenu->addSeparator();
     helpMenu->addAction(aboutAction);
     
-    // Store references to important actions as class members if needed
-    // this->openRomAction = openRomAction;
+    // Store references to important actions
+    this->startEmulationAction = startEmulationAction;
+    this->endEmulationAction = endEmulationAction;
+    this->romInfoAction = romInfoAction;
+    this->fullscreenAction = fullscreenAction;
+    this->alwaysOnTopAction = alwaysOnTopAction;
+    this->graphicsSettingsAction = graphicsSettingsAction;
+    this->audioSettingsAction = audioSettingsAction;
+    this->rspSettingsAction = rspSettingsAction;
+    this->inputSettingsAction = inputSettingsAction;
     
     // Force update
     mainMenuBar->setVisible(true);

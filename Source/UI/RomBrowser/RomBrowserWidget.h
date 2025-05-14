@@ -78,6 +78,11 @@ public:
     
     void refreshCovers(); // Add this new method declaration
     
+    /**
+     * @brief Method for status area styling
+     */
+    void setupStatusArea();
+
 signals:
     /**
      * @brief Emitted when a ROM is selected
@@ -124,6 +129,7 @@ private slots:
     void onCoverDirectoryClicked();
     void onRefreshCoversClicked(); // New slot for refreshing covers
     void updateToolbar();
+    void updateToolbarIcons(); // New method to update toolbar icons when theme changes
     
 private:
     void createViews();
@@ -135,7 +141,6 @@ private:
     void saveSettings();
     void setupGridView();
     void resizeDetailViewColumns();
-    void setupStatusArea(); // New method for status area styling
     void loadColumnSettings(); // Helper method to load column settings
     
     // UI components
@@ -152,7 +157,9 @@ private:
     QAction* m_gridViewAction;
     QAction* m_showTitlesAction;
     QAction* m_coverDirAction;
-    QAction* m_refreshCoversAction; // New action for refreshing covers
+    QAction* m_refreshCoversAction;
+    QAction* m_zoomInAction;  // New member for zoom in action
+    QAction* m_zoomOutAction; // New member for zoom out action
     
     // Grid view controls
     QSlider* m_zoomSlider;

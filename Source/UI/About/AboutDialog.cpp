@@ -21,7 +21,7 @@ void AboutDialog::setupUi()
 {
     // Set window properties
     setWindowTitle(tr("About Project64"));
-    setWindowIcon(QIcon(":/assets/icons/pj64.ico"));
+    setWindowIcon(QIcon(":/icons/pj64.ico"));
     resize(823, 600);
     
     QSizePolicy sizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -34,7 +34,7 @@ void AboutDialog::setupUi()
     // Logo
     m_logoLabel = new QLabel(this);
     m_logoLabel->setLineWidth(1);
-    m_logoLabel->setPixmap(QPixmap(":/assets/images/banner.png"));
+    m_logoLabel->setPixmap(QPixmap(":/images/banner.png"));
     m_logoLabel->setScaledContents(false);
     m_logoLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(m_logoLabel);

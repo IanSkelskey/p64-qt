@@ -1,6 +1,6 @@
 #include "RomBrowserWidget.h"
 #include "../../Core/SettingsManager.h"
-#include "../IconHelper.h"
+#include "../Theme/IconHelper.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -355,28 +355,6 @@ void RomBrowserWidget::createViews()
     m_viewStack->addWidget(m_gridView);
 }
 
-void RomBrowserWidget::setupStatusArea()
-{
-    // Set object names for better styling
-    m_statusLabel->setObjectName("statusLabel");
-    m_progressBar->setObjectName("statusProgressBar");
-    
-    // Set a minimum height to ensure consistent appearance
-    m_statusLabel->setMinimumHeight(24);
-    m_progressBar->setMinimumHeight(18);
-    
-    // Apply style to match the current theme
-    QString backgroundColor = palette().color(QPalette::Window).name();
-    QString textColor = palette().color(QPalette::WindowText).name();
-    
-    // Create a style for the status area that matches the theme
-    QString style = QString(
-        "QLabel#statusLabel { color: %1; background-color: %2; padding: 2px; }"
-    ).arg(textColor, backgroundColor);
-    
-    m_statusLabel->setStyleSheet(style);
-}
-
 void RomBrowserWidget::createToolbar()
 {
     m_toolbar = new QToolBar(tr("ROM Browser"), this);
@@ -384,15 +362,12 @@ void RomBrowserWidget::createToolbar()
     m_toolbar->setIconSize(QSize(20, 20));
     
     // Create view mode buttons with icons
-    QIcon gridViewIcon = QT_UI::IconHelper::getGridViewIcon();
-    QIcon detailViewIcon = QT_UI::IconHelper::getDetailViewIcon();
-    
-    m_detailViewAction = m_toolbar->addAction(detailViewIcon, 
+    m_detailViewAction = m_toolbar->addAction(QT_UI::IconHelper::getDetailViewIcon(), 
                                              tr("Detail View"));
     m_detailViewAction->setCheckable(true);
     m_detailViewAction->setChecked(true);
     
-    m_gridViewAction = m_toolbar->addAction(gridViewIcon, 
+    m_gridViewAction = m_toolbar->addAction(QT_UI::IconHelper::getGridViewIcon(), 
                                            tr("Grid View"));
     m_gridViewAction->setCheckable(true);
     
@@ -410,18 +385,13 @@ void RomBrowserWidget::createToolbar()
     
     m_toolbar->addSeparator();
     
-    // Create a clear, distinct Show Titles button
-    m_showTitlesAction = new QAction(tr("Show Titles"), this);
+    // Create a clear, distinct Show Titles button with icon
+    m_showTitlesAction = new QAction(QT_UI::IconHelper::getShowTitlesIcon(), tr("Show Titles"), this);
     m_showTitlesAction->setCheckable(true);
     m_showTitlesAction->setChecked(m_romListModel ? m_romListModel->showTitles() : true);
+    m_toolbar->addAction(m_showTitlesAction);
     
-    QToolButton* showTitlesButton = new QToolButton();
-    showTitlesButton->setDefaultAction(m_showTitlesAction);
-    showTitlesButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
-    showTitlesButton->setMinimumWidth(80); // Make the button wider for better visibility
-    m_toolbar->addWidget(showTitlesButton);
-    
-    // Connect the show titles action - FIXED CONNECTION TO USE DIRECT BOOL PARAMETER
+    // Connect the show titles action
     connect(m_showTitlesAction, &QAction::toggled, this, [this](bool checked) {
         if (m_romListModel) {
             m_romListModel->setShowTitles(checked);
@@ -431,11 +401,13 @@ void RomBrowserWidget::createToolbar()
         }
     });
     
-    // Zoom controls with slider
+    // Zoom controls with slider and themed icons
     m_toolbar->addSeparator();
-    QLabel* zoomIconLabel = new QLabel(this);
-    zoomIconLabel->setPixmap(QIcon(":/icons/zoom_out.png").pixmap(16, 16));
-    m_toolbar->addWidget(zoomIconLabel);
+    
+    // Create zoom out icon with proper theming
+    m_zoomOutAction = new QAction(QT_UI::IconHelper::getZoomOutIcon(), "", this);
+    m_zoomOutAction->setToolTip(tr("Zoom Out"));
+    m_toolbar->addAction(m_zoomOutAction);
     
     m_zoomSlider = new QSlider(Qt::Horizontal, this);
     m_zoomSlider->setMinimum(MIN_ZOOM);
@@ -444,9 +416,10 @@ void RomBrowserWidget::createToolbar()
     m_zoomSlider->setFixedWidth(100);
     m_toolbar->addWidget(m_zoomSlider);
     
-    QLabel* zoomIconLabel2 = new QLabel(this);
-    zoomIconLabel2->setPixmap(QIcon(":/icons/zoom_in.png").pixmap(16, 16));
-    m_toolbar->addWidget(zoomIconLabel2);
+    // Create zoom in icon with proper theming
+    m_zoomInAction = new QAction(QT_UI::IconHelper::getZoomInIcon(), "", this);
+    m_zoomInAction->setToolTip(tr("Zoom In"));
+    m_toolbar->addAction(m_zoomInAction);
     
     m_zoomLabel = new QLabel("100%", this);
     m_zoomLabel->setFixedWidth(40);
@@ -454,13 +427,53 @@ void RomBrowserWidget::createToolbar()
     
     m_toolbar->addSeparator();
     
-    // Cover directory button
-    m_coverDirAction = m_toolbar->addAction(tr("Cover Directory..."), this, &RomBrowserWidget::onCoverDirectoryClicked);
+    // Cover directory button with icon
+    m_coverDirAction = m_toolbar->addAction(QT_UI::IconHelper::getFolderSettingsIcon(), tr("Cover Directory..."), this, &RomBrowserWidget::onCoverDirectoryClicked);
     
-    // Refresh covers button
-    m_refreshCoversAction = m_toolbar->addAction(tr("Refresh Covers"), this, &RomBrowserWidget::onRefreshCoversClicked);
-    // Optionally add an icon for the refresh button
-    m_refreshCoversAction->setIcon(QIcon::fromTheme("view-refresh", QIcon(":/icons/refresh.png")));
+    // Refresh covers button with proper themed icon
+    m_refreshCoversAction = m_toolbar->addAction(QT_UI::IconHelper::getRefreshIcon(), tr("Refresh Covers"), this, &RomBrowserWidget::onRefreshCoversClicked);
+    
+    // Connect theme change signal to update icons when theme changes
+    connect(&QT_UI::ThemeManager::instance(), &QT_UI::ThemeManager::themeChanged,
+            this, &RomBrowserWidget::updateToolbarIcons);
+}
+
+// Add a new method to update all toolbar icons when theme changes
+void RomBrowserWidget::updateToolbarIcons()
+{
+    // Update toolbar action icons
+    if (m_detailViewAction) m_detailViewAction->setIcon(QT_UI::IconHelper::getDetailViewIcon());
+    if (m_gridViewAction) m_gridViewAction->setIcon(QT_UI::IconHelper::getGridViewIcon());
+    if (m_showTitlesAction) m_showTitlesAction->setIcon(QT_UI::IconHelper::getShowTitlesIcon());
+    if (m_zoomInAction) m_zoomInAction->setIcon(QT_UI::IconHelper::getZoomInIcon());
+    if (m_zoomOutAction) m_zoomOutAction->setIcon(QT_UI::IconHelper::getZoomOutIcon());
+    if (m_coverDirAction) m_coverDirAction->setIcon(QT_UI::IconHelper::getFolderSettingsIcon());
+    if (m_refreshCoversAction) m_refreshCoversAction->setIcon(QT_UI::IconHelper::getRefreshIcon());
+    
+    // Force a repaint of the toolbar
+    if (m_toolbar) m_toolbar->update();
+}
+
+void RomBrowserWidget::setupStatusArea()
+{
+    // Set object names for better styling
+    m_statusLabel->setObjectName("statusLabel");
+    m_progressBar->setObjectName("statusProgressBar");
+    
+    // Set a minimum height to ensure consistent appearance
+    m_statusLabel->setMinimumHeight(24);
+    m_progressBar->setMinimumHeight(18);
+    
+    // Use current palette colors to match the theme
+    QString backgroundColor = palette().color(QPalette::Window).name();
+    QString textColor = palette().color(QPalette::WindowText).name();
+    
+    // Create a style for the status area that matches the theme
+    QString style = QString(
+        "QLabel#statusLabel { color: %1; background-color: %2; padding: 2px; }"
+    ).arg(textColor, backgroundColor);
+    
+    m_statusLabel->setStyleSheet(style);
 }
 
 void RomBrowserWidget::createEmptyState()

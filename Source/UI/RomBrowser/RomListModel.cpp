@@ -1,5 +1,6 @@
 #include "RomListModel.h"
 #include "../../Core/SettingsManager.h"
+#include "../Theme/IconHelper.h"  // Add this include for IconHelper
 #include <QDir>
 #include <QFileInfo>
 #include <QDateTime>
@@ -35,21 +36,21 @@ RomListModel::RomListModel(QObject* parent)
     // We won't set any default columns here - we'll load them from settings instead
     // If no settings exist, we'll use defaults after trying to load
     
-    // Load country icons from resources
-    m_countryIcons["USA"] = QIcon(":/flags/usa.svg");
-    m_countryIcons["JP"] = QIcon(":/flags/japan.svg");
-    m_countryIcons["EU"] = QIcon(":/flags/europe.svg");
-    m_countryIcons["AU"] = QIcon(":/flags/australia.svg");
-    m_countryIcons["FR"] = QIcon(":/flags/france.svg");
-    m_countryIcons["GE"] = QIcon(":/flags/germany.svg");
-    m_countryIcons["IT"] = QIcon(":/flags/italy.svg");
-    m_countryIcons["SP"] = QIcon(":/flags/spain.svg");
-    m_countryIcons["OTHER"] = QIcon(":/flags/unknown.svg");
+    // Load country icons using IconHelper
+    m_countryIcons["USA"] = IconHelper::getUSAFlagIcon();
+    m_countryIcons["JP"] = IconHelper::getJapanFlagIcon();
+    m_countryIcons["EU"] = IconHelper::getEuropeFlagIcon();
+    m_countryIcons["AU"] = IconHelper::getAustraliaFlagIcon();
+    m_countryIcons["FR"] = IconHelper::getFranceFlagIcon();
+    m_countryIcons["GE"] = IconHelper::getGermanyFlagIcon();
+    m_countryIcons["IT"] = IconHelper::getItalyFlagIcon();
+    m_countryIcons["SP"] = IconHelper::getSpainFlagIcon();
+    m_countryIcons["OTHER"] = IconHelper::getUnknownFlagIcon();
 
     m_defaultIcon = QIcon(":/icons/rom_default.png");
     
     // Load default cover image - fix the resource path
-    m_defaultCoverImage = QPixmap(":/assets/images/default-label.png");
+    m_defaultCoverImage = QPixmap(":/images/default-label.png");
     if (m_defaultCoverImage.isNull()) {
         qDebug() << "Failed to load default cover image!";
         // Fallback if resource isn't found
@@ -994,25 +995,25 @@ QString RomGridDelegate::cleanTitle(const QString& title, QString& countryCode, 
 
 QIcon RomGridDelegate::getCountryIcon(const QString& countryCode) const
 {
-    // Map parenthetical country codes to flag icons
+    // Map parenthetical country codes to flag icons using IconHelper
     if (countryCode.contains("U") || countryCode.contains("USA"))
-        return QIcon(":/flags/usa.svg");
+        return IconHelper::getUSAFlagIcon();
     else if (countryCode.contains("E") || countryCode.contains("Europe"))
-        return QIcon(":/flags/europe.svg");
+        return IconHelper::getEuropeFlagIcon();
     else if (countryCode.contains("J") || countryCode.contains("Japan"))
-        return QIcon(":/flags/japan.svg");
+        return IconHelper::getJapanFlagIcon();
     else if (countryCode.contains("G") || countryCode.contains("Germany"))
-        return QIcon(":/flags/germany.svg");
+        return IconHelper::getGermanyFlagIcon();
     else if (countryCode.contains("F") || countryCode.contains("France"))
-        return QIcon(":/flags/france.svg");
+        return IconHelper::getFranceFlagIcon();
     else if (countryCode.contains("I") || countryCode.contains("Italy"))
-        return QIcon(":/flags/italy.svg");
+        return IconHelper::getItalyFlagIcon();
     else if (countryCode.contains("S") || countryCode.contains("Spain"))
-        return QIcon(":/flags/spain.svg");
+        return IconHelper::getSpainFlagIcon();
     else if (countryCode.contains("A") || countryCode.contains("Australia"))
-        return QIcon(":/flags/australia.svg");
+        return IconHelper::getAustraliaFlagIcon();
     else
-        return QIcon(":/flags/unknown.svg");
+        return IconHelper::getUnknownFlagIcon();
 }
 
 void RomGridDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, 
