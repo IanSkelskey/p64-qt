@@ -83,3 +83,6 @@ CMakeLists.txt.user*
 
 # VS Code
 .vscode/
+
+# SQLite
+database.sqlite-journal
