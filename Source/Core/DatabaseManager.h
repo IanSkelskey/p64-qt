@@ -75,9 +75,9 @@ private:
     QSqlDatabase m_db;
     
     // Query execution helpers
-    std::vector<std::map<QString, QVariant>> executeQuery(const QString& query);
-    std::map<QString, QVariant> executeSingleRowQuery(const QString& query);
-    QVariant executeSingleValueQuery(const QString& query);
+    std::vector<std::map<QString, QVariant>> executeQuery(const QString& query) const;
+    std::map<QString, QVariant> executeSingleRowQuery(const QString& query) const;
+    QVariant executeSingleValueQuery(const QString& query) const;
     
     // Helper to get game ID from CRC
     int getGameIdFromCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode);

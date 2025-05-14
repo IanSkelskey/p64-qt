@@ -1,6 +1,7 @@
 #include "DatabaseManager.h"
 #include <QDebug>
 #include <QSqlRecord>
+#include <QRegularExpression>
 
 DatabaseManager::DatabaseManager(const QString& dbPath) : m_dbPath(dbPath), m_db(QSqlDatabase::addDatabase("QSQLITE")) {
     m_db.setDatabaseName(m_dbPath);
@@ -36,7 +37,7 @@ std::vector<std::map<QString, QVariant>> DatabaseManager::getAllEnhancements() {
     return executeQuery("SELECT * FROM enhancements");
 }
 
-std::vector<std::map<QString, QVariant>> DatabaseManager::executeQuery(const QString& query) {
+std::vector<std::map<QString, QVariant>> DatabaseManager::executeQuery(const QString& query) const {
     std::vector<std::map<QString, QVariant>> results;
 
     QSqlQuery q(m_db);
@@ -56,12 +57,12 @@ std::vector<std::map<QString, QVariant>> DatabaseManager::executeQuery(const QSt
     return results;
 }
 
-std::map<QString, QVariant> DatabaseManager::executeSingleRowQuery(const QString& query) {
+std::map<QString, QVariant> DatabaseManager::executeSingleRowQuery(const QString& query) const {
     auto results = executeQuery(query);
     return results.empty() ? std::map<QString, QVariant>() : results.front();
 }
 
-QVariant DatabaseManager::executeSingleValueQuery(const QString& query) {
+QVariant DatabaseManager::executeSingleValueQuery(const QString& query) const {
     QSqlQuery q(m_db);
     if (!q.exec(query) || !q.next()) {
         return QVariant();
@@ -123,7 +124,7 @@ QString DatabaseManager::normalizeCountryCode(const QString& countryCode) {
     QString normalized = countryCode;
     
     // Remove any non-hex characters
-    normalized.remove(QRegExp("[^0-9A-Fa-f]"));
+    normalized.remove(QRegularExpression("[^0-9A-Fa-f]"));
     
     // If the country code is a single character, try to convert to hex
     if (normalized.length() == 1) {
@@ -252,7 +253,7 @@ std::map<QString, QVariant> DatabaseManager::getRomInfoByInternalName(const QStr
     
     // Find games with matching internal name (exact or cleaned version)
     QString cleanedName = internalName;
-    cleanedName.remove(QRegExp("[^a-zA-Z0-9]")); // Remove special characters
+    cleanedName.remove(QRegularExpression("[^a-zA-Z0-9]")); // Remove special characters
     
     QString query = QString("SELECT * FROM games WHERE internal_name = '%1' OR internal_name = '%2' LIMIT 1")
         .arg(internalName)
