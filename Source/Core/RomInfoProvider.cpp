@@ -26,6 +26,7 @@ RomInfoProvider::RomInfoProvider() :
     m_players(1),
     m_forceFeedback(false),
     m_productID(""),
+    m_status("Unknown"),  // Initialize status
     m_romParser(new RomParser())
 {
     if (m_countryNames.isEmpty()) {
@@ -108,6 +109,9 @@ bool RomInfoProvider::openRomFile(const QString& filePath)
     
     // Calculate CRCs
     calculateCRC();
+    
+    // Detect CIC chip based on ROM header information
+    detectCICChip();
     
     // Load ROM database information
     loadRomInformation();
@@ -248,6 +252,12 @@ void RomInfoProvider::loadRDBInfo()
             qDebug() << "Loaded Good Name from RDB:" << m_goodName;
         }
         
+        // Add check for Status field
+        if (rdbSettings.contains("Status")) {
+            m_status = rdbSettings.value("Status").toString();
+            qDebug() << "Loaded Status from RDB:" << m_status;
+        }
+        
         if (rdbSettings.contains("Internal Name")) {
             // If internal name is blank or missing from ROM header, use from RDB
             if (m_internalName.isEmpty()) {
@@ -338,6 +348,12 @@ void RomInfoProvider::loadRDBInfo()
             qDebug() << "Loaded ProductID from RDX:" << m_productID;
         }
         
+        // Load Status if available and not already set
+        if (m_status == "Unknown" && rdxSettings.contains("Status")) {
+            m_status = rdxSettings.value("Status").toString();
+            qDebug() << "Loaded Status from RDX:" << m_status;
+        }
+        
         rdxSettings.endGroup();
     } else {
         qDebug() << "ROM not found in RDX";
@@ -349,6 +365,7 @@ void RomInfoProvider::loadRDBInfo()
              << "Release Date:" << m_releaseDate
              << "Genre:" << m_genre 
              << "Players:" << m_players
+             << "Status:" << m_status
              << "ProductID:" << m_productID;
 }
 
@@ -453,6 +470,12 @@ RomByteFormat RomInfoProvider::getByteFormat() const
     return m_byteFormat;
 }
 
+// Add getter for status
+QString RomInfoProvider::getStatus() const
+{
+    return m_status;
+}
+
 QString RomInfoProvider::countryCodeToName(CountryCode countryCode)
 {
     return m_countryNames.value(countryCode, "Unknown");
@@ -473,6 +496,49 @@ CountryCode RomInfoProvider::charToCountryCode(char countryChar)
         case 0x59: return Country_Unknown3; // Y - PAL
         default:   return Country_Unknown;
     }
+}
+
+// Update CICChip detection in openRomFile or parseRomHeader method
+void RomInfoProvider::detectCICChip() 
+{
+    // The CIC chip can often be detected by examining the ROM data at specific offsets
+    // Here's a simplified detection method based on common CIC patterns
+
+    // Default to unknown
+    m_cicChip = CIC_UNKNOWN;
+    
+    // Check if we have enough data
+    if (m_RomHeader.size() < 0x40)
+        return;
+        
+    // Detect based on the ROM header checksum at 0x10-0x13 and other characteristics
+    uint32_t crc1 = m_crc1;
+    
+    // Common CIC chip detection patterns (simplified approach)
+    if (crc1 == 0x587BD543 || crc1 == 0x90D68C10 || crc1 == 0xA5CC4F95) {
+        m_cicChip = CIC_NUS_6101;  // Also used by StarFox 64
+    } else if (crc1 == 0xE24DD796 || crc1 == 0x900DDE47) {
+        m_cicChip = CIC_NUS_6102;  // Common NTSC CIC
+    } else if (crc1 == 0xB8B51D35 || crc1 == 0x49207DCE || crc1 == 0x9BBDF07D) {
+        m_cicChip = CIC_NUS_6103;  // Common PAL CIC
+    } else if (crc1 == 0x0B050EE0 || crc1 == 0xC8379994 || crc1 == 0x0E711C63) {
+        m_cicChip = CIC_NUS_6105;  // Used by Zelda, F-Zero X, etc.
+    } else if (crc1 == 0xD5BE5580 || crc1 == 0xB98A9A45) {
+        m_cicChip = CIC_NUS_6106;  // Rare PAL CIC
+    } else if (m_cartID == "NA" && getMediaType().contains("ALECK64")) {
+        m_cicChip = CIC_NUS_5167;  // Aleck64 arcade board
+    } else if (getMediaType().contains("64DD")) {
+        m_cicChip = CIC_NUS_8303;  // 64DD
+    } else {
+        // Default to most common CIC chip if we can't detect
+        if (m_country == Country_USA || m_country == Country_Japan) {
+            m_cicChip = CIC_NUS_6102;  // NTSC default
+        } else {
+            m_cicChip = CIC_NUS_6103;  // PAL default
+        }
+    }
+    
+    qDebug() << "Detected CIC chip:" << m_cicChip;
 }
 
 } // namespace QT_UI

@@ -40,6 +40,7 @@ public:
     int getPlayers() const;
     bool getForceFeedback() const;
     QString getProductID() const;
+    QString getStatus() const;  // New method to get compatibility status
     
     // Add a method to get the detected ROM format
     RomByteFormat getByteFormat() const;
@@ -50,6 +51,7 @@ private:
     void calculateCRC();
     bool loadRomInformation();
     void loadRDBInfo();
+    void detectCICChip();  // Add this declaration
     
     // Static helper methods
     static QString countryCodeToName(CountryCode countryCode);
@@ -76,6 +78,7 @@ private:
     int m_players;
     bool m_forceFeedback;
     QString m_productID;
+    QString m_status;  // New field for compatibility status
     
     // Static country name mapping
     static QMap<CountryCode, QString> m_countryNames;

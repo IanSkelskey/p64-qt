@@ -117,6 +117,10 @@ QVariant RomListModel::data(const QModelIndex& index, int role) const
         case FilePath: return romInfo.filePath.isEmpty() ? tr("Unknown") : romInfo.filePath;
         case CartID: return romInfo.cartID.isEmpty() ? tr("Unknown") : romInfo.cartID;
         case MediaType: return romInfo.mediaType.isEmpty() ? tr("Unknown") : romInfo.mediaType;
+        case ProductID: return romInfo.productID.isEmpty() ? tr("Unknown") : romInfo.productID;
+        case ForceFeedback: return romInfo.forceFeedback ? tr("Yes") : tr("No");
+        case CICChip: return romInfo.cicChip.isEmpty() ? tr("Unknown") : romInfo.cicChip;
+        case Status: return romInfo.status.isEmpty() ? tr("Unknown") : romInfo.status;
         default: return QVariant();
         }
     case Qt::DecorationRole:
@@ -195,6 +199,10 @@ QVariant RomListModel::headerData(int section, Qt::Orientation orientation, int 
     case FilePath: return tr("File Path");
     case CartID: return tr("Cartridge ID");
     case MediaType: return tr("Media");
+    case ProductID: return tr("Product ID");
+    case ForceFeedback: return tr("Force Feedback");
+    case CICChip: return tr("CIC Chip");
+    case Status: return tr("Status");
     default: return QVariant();
     }
 }
@@ -424,6 +432,10 @@ QString RomListModel::columnNameFromEnum(RomColumns column) const
     case FilePath: return "FilePath";
     case CartID: return "CartID";
     case MediaType: return "MediaType";
+    case ProductID: return "ProductID";
+    case ForceFeedback: return "ForceFeedback";
+    case CICChip: return "CICChip";
+    case Status: return "Status";
     default: return "Unknown";
     }
 }
@@ -483,12 +495,43 @@ bool RomListModel::loadRomInfo(const QString& filePath, RomInfo& info)
     info.cartID = provider.getCartID();
     info.mediaType = provider.getMediaType();
     
+    // New: Set CIC chip information - Fix the type reference
+    QT_UI::CICChip cicChip = provider.getCICChip();
+    switch (cicChip) {
+        case QT_UI::CIC_NUS_6101:
+            info.cicChip = "NUS-6101 (NTSC)";
+            break;
+        case QT_UI::CIC_NUS_6102:
+            info.cicChip = "NUS-6102 (NTSC)";
+            break;
+        case QT_UI::CIC_NUS_6103:
+            info.cicChip = "NUS-6103 (PAL)";
+            break;
+        case QT_UI::CIC_NUS_6105:
+            info.cicChip = "NUS-6105 (NTSC)";
+            break;
+        case QT_UI::CIC_NUS_6106:
+            info.cicChip = "NUS-6106 (PAL)";
+            break;
+        case QT_UI::CIC_NUS_5167:
+            info.cicChip = "NUS-5167 (ALECK64)";
+            break;
+        case QT_UI::CIC_NUS_8303:
+            info.cicChip = "NUS-8303 (64DD)";
+            break;
+        default:
+            info.cicChip = "Unknown";
+            break;
+    }
+    
     // Additional information from ROM database
     info.developer = provider.getDeveloper();
     info.releaseDate = provider.getReleaseDate();
     info.genre = provider.getGenre();
     info.players = QString::number(provider.getPlayers());
-    info.productID = provider.getProductID();  // Get ProductID
+    info.productID = provider.getProductID();
+    info.forceFeedback = provider.getForceFeedback();
+    info.status = provider.getStatus();  // Get the status
     
     // Format the release date nicely if possible (assuming YYYY-MM-DD format)
     if (!info.releaseDate.isEmpty()) {
