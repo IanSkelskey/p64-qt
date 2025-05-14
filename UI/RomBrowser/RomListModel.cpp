@@ -31,18 +31,8 @@ RomListModel::RomListModel(QObject* parent)
     , m_currentViewMode(DetailView) // Default to detail view
     , m_showTitles(true) // Show titles by default
 {
-    // Initialize visible columns with default values
-    m_visibleColumns = {
-        FileName,
-        GoodName,
-        InternalName,
-        Size,
-        Country,
-        ReleaseDate,
-        Developer,
-        Genre,
-        Players
-    };
+    // We won't set any default columns here - we'll load them from settings instead
+    // If no settings exist, we'll use defaults after trying to load
     
     // Load country icons from resources
     m_countryIcons["USA"] = QIcon(":/flags/Resources/flags/usa.svg");
@@ -71,8 +61,13 @@ RomListModel::RomListModel(QObject* parent)
     // Initialize cover directory
     m_coverDirectory = QApplication::applicationDirPath() + "/covers";
     
-    // Load settings
+    // Load settings - this will set up the columns
     loadSettings();
+    
+    qDebug() << "RomListModel initialized with" << m_visibleColumns.size() << "columns";
+    for (int i = 0; i < m_visibleColumns.size(); i++) {
+        qDebug() << "  Column" << i << ":" << columnNameFromEnum(m_visibleColumns[i]);
+    }
 }
 
 RomListModel::~RomListModel()
@@ -352,19 +347,85 @@ QString RomListModel::getRomPath(int index) const
     return QString();
 }
 
+void RomListModel::clearVisibleColumns()
+{
+    beginResetModel();
+    m_visibleColumns.clear();
+    endResetModel();
+    
+    qDebug() << "Cleared all visible columns";
+}
+
 void RomListModel::setVisibleColumns(const QVector<RomColumns>& columns)
 {
-    if (columns.isEmpty())
+    if (columns.isEmpty()) {
+        qDebug() << "Attempted to set empty columns list, ignoring";
         return;
+    }
     
+    // Skip if the columns haven't actually changed
+    if (m_visibleColumns == columns) {
+        qDebug() << "Columns unchanged, not updating";
+        return;
+    }
+    
+    qDebug() << "Setting visible columns. Requested:" << columns.size() << "columns";
+    
+    // Log columns being set
+    QString columnList;
+    for (int i = 0; i < columns.size(); i++) {
+        columnList += QString::number(columns[i]);
+        if (i < columns.size() - 1) columnList += ", ";
+    }
+    qDebug() << "New columns:" << columnList;
+    
+    QVector<RomColumns> oldColumns = m_visibleColumns;
+    
+    // Use beginResetModel/endResetModel to ensure views fully update
     beginResetModel();
     m_visibleColumns = columns;
     endResetModel();
+    
+    // Log for debugging
+    debugPrintColumns();
+    
+    // Emit a custom signal that the columns have changed
+    emit columnsChanged();
 }
 
-QVector<RomListModel::RomColumns> RomListModel::visibleColumns() const
+// Add this method to enable better debugging
+void RomListModel::debugPrintColumns() const
 {
-    return m_visibleColumns;
+    qDebug() << "========= Current visible columns: =========";
+    qDebug() << "Count:" << m_visibleColumns.size();
+    for (int i = 0; i < m_visibleColumns.size(); i++) {
+        qDebug() << "  Column" << i << ": ID=" << m_visibleColumns[i] 
+                 << "Name=" << columnNameFromEnum(m_visibleColumns[i]);
+    }
+    qDebug() << "===========================================";
+}
+
+// Add a helper method to get readable column names for debugging
+QString RomListModel::columnNameFromEnum(RomColumns column) const
+{
+    switch (column) {
+    case FileName: return "FileName";
+    case GoodName: return "GoodName";
+    case InternalName: return "InternalName";
+    case Size: return "Size";
+    case Country: return "Country";
+    case ReleaseDate: return "ReleaseDate";
+    case Players: return "Players";
+    case Genre: return "Genre";
+    case Developer: return "Developer";
+    case CRC1: return "CRC1";
+    case CRC2: return "CRC2";
+    case MD5: return "MD5";
+    case FilePath: return "FilePath";
+    case CartID: return "CartID";
+    case MediaType: return "MediaType";
+    default: return "Unknown";
+    }
 }
 
 void RomListModel::setRomDirectory(const QString& directory)
@@ -728,6 +789,57 @@ void RomListModel::loadSettings()
     // Load cover directory
     m_coverDirectory = settings.value("RomBrowser/CoverDirectory", 
                                     QApplication::applicationDirPath() + "/covers").toString();
+                                    
+    // CRITICAL FIX: DO NOT set default columns at all here - if settings exist, use them exclusively
+    QVariant visibleColumnsVar = settings.value("RomBrowser/VisibleColumns");
+    if (!visibleColumnsVar.isNull()) {
+        QList<QVariant> visibleColumns = visibleColumnsVar.toList();
+        QVector<RomColumns> columns;
+        
+        qDebug() << "Loading columns from settings. Count:" << visibleColumns.size();
+        
+        // Only process if we have columns defined
+        if (!visibleColumns.isEmpty()) {
+            foreach(QVariant column, visibleColumns) {
+                int colValue = column.toInt();
+                if (colValue >= 0 && colValue < ColumnCount) {
+                    columns.append(static_cast<RomColumns>(colValue));
+                    qDebug() << "  Loading column:" << colValue << "(" << columnNameFromEnum(static_cast<RomColumns>(colValue)) << ")";
+                }
+            }
+            
+            // Only set columns if we actually loaded valid ones
+            if (!columns.isEmpty()) {
+                m_visibleColumns = columns;
+                qDebug() << "Applied" << columns.size() << "columns from settings";
+                return; // Important: exit here to avoid setting default columns
+            }
+        }
+        
+        qDebug() << "No valid columns defined in settings, using defaults";
+    } else {
+        qDebug() << "No column settings found, using defaults";
+    }
+    
+    // Only get here if no valid columns were loaded from settings
+    setDefaultColumns();
+}
+
+// Add a new helper method to set default columns
+void RomListModel::setDefaultColumns()
+{
+    m_visibleColumns = {
+        FileName,
+        GoodName,
+        InternalName,
+        Size,
+        Country,
+        ReleaseDate,
+        Developer,
+        Genre,
+        Players
+    };
+    qDebug() << "Set default columns. Count:" << m_visibleColumns.size();
 }
 
 void RomListModel::saveSettings()
@@ -1057,6 +1169,11 @@ QSize RomGridDelegate::sizeHint(const QStyleOptionViewItem& option,
     }
     
     return QSize(width, height);
+}
+
+QVector<RomListModel::RomColumns> RomListModel::visibleColumns() const
+{
+    return m_visibleColumns;
 }
 
 } // namespace QT_UI

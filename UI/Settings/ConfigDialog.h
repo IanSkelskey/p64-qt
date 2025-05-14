@@ -9,6 +9,8 @@
 #include <QPushButton>
 #include <QSpinBox>
 #include <QDialogButtonBox>
+#include <QListWidget>
+#include <QVector>
 
 namespace QT_UI {
 
@@ -25,12 +27,26 @@ private slots:
     void browseSavesDir();
     void applySettings();
     void resetSettings();
+    
+    // ROM Browser column management slots
+    void addSelectedColumn();
+    void removeSelectedColumn();
+    void moveColumnUp();
+    void moveColumnDown();
+    void updateColumnButtonStates();
+    void romBrowserEnabledChanged(bool enabled);
+
+signals:
+    // Signal emitted when column settings have been changed
+    void columnSettingsChanged();
 
 private:
     void setupUi();
+    void setupRomBrowserTab();
     void loadSettings();
     void saveSettings();
-
+    void populateColumnLists();
+    
     QTabWidget *m_tabWidget;
     
     // General tab widgets
@@ -50,6 +66,26 @@ private:
     QLineEdit *m_savesDirEdit;
     QPushButton *m_browseSavesButton;
     QCheckBox *m_useDefaultSavesDirCheck;
+    
+    // ROM Browser tab widgets
+    QCheckBox *m_useRomBrowserCheck;
+    QCheckBox *m_recursionCheck;
+    QCheckBox *m_showExtensionsCheck;
+    QListWidget *m_availableColumnsList;
+    QListWidget *m_shownColumnsList;
+    QPushButton *m_addColumnButton;
+    QPushButton *m_removeColumnButton;
+    QPushButton *m_moveUpButton;
+    QPushButton *m_moveDownButton;
+    
+    // Column info structure to track columns and their states
+    struct ColumnInfo {
+        int columnId;
+        QString name;
+        bool selected;
+        int position;
+    };
+    QVector<ColumnInfo> m_columnInfo;
     
     QDialogButtonBox *m_buttonBox;
 };

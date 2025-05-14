@@ -653,11 +653,53 @@ void MainWindow::onShowCPUStats()
 
 void MainWindow::onConfiguration()
 {
-    qDebug() << "Opening Configuration dialog";
+    // Create config dialog if it doesn't exist
     if (!m_configDialog) {
-        m_configDialog = new QT_UI::ConfigDialog(this);
+        createConfigDialog();
     }
+    
+    // Show the dialog
     showDialog(m_configDialog);
+}
+
+void MainWindow::createConfigDialog()
+{
+    // Create a new configuration dialog
+    m_configDialog = new QT_UI::ConfigDialog(this);
+    
+    // Connect to the column settings changed signal
+    connect(m_configDialog, &QT_UI::ConfigDialog::columnSettingsChanged, 
+            this, &MainWindow::handleColumnSettingsChanged);
+}
+
+void MainWindow::handleColumnSettingsChanged()
+{
+    qDebug() << "Column settings changed signal received in MainWindow";
+    
+    // Update ROM Browser columns if it exists
+    if (romBrowserWidget) {
+        qDebug() << "Forcing reload of column settings in ROM browser";
+        
+        // Ensure settings are written to disk first
+        QSettings settings("Project64", "QtUI");
+        settings.sync();
+        
+        // Add a delay to ensure everything is saved properly
+        QTimer::singleShot(250, this, [this]() {
+            if (romBrowserWidget) {
+                // Force a reload of the column settings
+                romBrowserWidget->reloadColumnSettings();
+                
+                // Force the widget to redraw completely
+                romBrowserWidget->update();
+                
+                // Also ensure the main window updates its layout
+                QCoreApplication::processEvents();
+            }
+        });
+    } else {
+        qDebug() << "ROM Browser widget not available";
+    }
 }
 
 // View menu slots

@@ -70,6 +70,11 @@ public:
      * @return True if titles are shown
      */
     bool showTitles() const;
+
+    /**
+     * @brief Reloads the column settings from QSettings
+     */
+    void reloadColumnSettings();
     
 signals:
     /**
@@ -129,6 +134,7 @@ private:
     void setupGridView();
     void resizeDetailViewColumns();
     void setupStatusArea(); // New method for status area styling
+    void loadColumnSettings(); // Helper method to load column settings
     
     // UI components
     QStackedWidget* m_viewStack;

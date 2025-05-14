@@ -71,6 +71,9 @@ private slots:
     
     // Helper slots for menu bar visibility
     void ensureMenuBarVisible();
+    
+    // Column settings handling
+    void handleColumnSettingsChanged();
 
 private:
     void createCentralWidget();
@@ -111,6 +114,9 @@ private:
     QT_UI::AboutDialog* m_aboutDialog;
     QT_UI::ConfigDialog* m_configDialog;
     QT_UI::CoverDownloader* m_coverDownloader;
+
+    // Config dialog management
+    void createConfigDialog();
 
     // Helper method for showing dialogs
     void showDialog(QDialog* dialog);

@@ -107,6 +107,7 @@ public:
     // Column visibility and order
     void setVisibleColumns(const QVector<RomColumns>& columns);
     QVector<RomColumns> visibleColumns() const;
+    void clearVisibleColumns();
     
     // View mode handling
     void setViewMode(ViewMode mode);
@@ -136,6 +137,7 @@ signals:
     void romAdded(const QString& filePath);
     void romRemoved(const QString& filePath);
     void coverLoaded(const QString& romPath);
+    void columnsChanged();  // Add this signal
     
 private:
     // Helper methods
@@ -145,6 +147,9 @@ private:
     QPixmap createPlaceholderCover(const RomInfo& info) const;
     void loadSettings();
     void saveSettings();
+    QString columnNameFromEnum(RomColumns column) const;
+    void setDefaultColumns();
+    void debugPrintColumns() const;  // Add this declaration
     
     // ROM information loading
     bool loadRomInfo(const QString& filePath, RomInfo& info);
