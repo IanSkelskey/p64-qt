@@ -4,6 +4,7 @@
 #include <QByteArray>
 #include <QMap>
 #include "RomParser.h" // Include parser to get enum types
+#include "DatabaseManager.h" // Add DatabaseManager include
 
 namespace QT_UI {
 
@@ -88,6 +89,9 @@ private:
     
     // ROM parser
     RomParser* m_romParser;
+
+    // Add DatabaseManager
+    DatabaseManager* m_dbManager;
 };
 
 } // namespace QT_UI

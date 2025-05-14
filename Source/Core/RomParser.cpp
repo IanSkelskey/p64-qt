@@ -56,8 +56,11 @@ RomByteFormat RomParser::detectByteFormat() const
         return Format_V64;
     }
     
-    // Default to Z64 if we can't determine
-    qWarning() << "Could not determine ROM format, defaulting to Z64. Magic:" << QString::number(magic, 16);
+    // Default to Z64 if we can't determine - only log warning in this case
+    if (magic != 0x80371240 && magic != 0x37804012 && magic != 0x40123780) {
+        qWarning() << "Could not determine ROM format, defaulting to Z64. Magic:" << QString::number(magic, 16);
+    }
+    
     return Format_Z64;
 }
 
@@ -158,20 +161,8 @@ QString RomParser::extractMediaType() const
         return "Unknown";
     }
     
-    // Debug the header bytes around the media type area
-    qDebug() << "Media type extraction - Header bytes at 0x38-0x3B:";
-    for (int i = 0; i < 4 && i + 0x38 < m_headerZ64.size(); i++) {
-        qDebug() << QString("Byte 0x%1: 0x%2 (%3)")
-                   .arg(0x38 + i, 2, 16, QChar('0'))
-                   .arg((unsigned char)m_headerZ64.at(0x38 + i), 2, 16, QChar('0'))
-                   .arg(QChar(m_headerZ64.at(0x38 + i)));
-    }
-    
-    // According to documentation, the first byte at 0x38 defines the media type
-    // The second byte at 0x39 is the first letter of a 2-letter game ID
-    
+    // Remove excessive debug output
     unsigned char mediaType = (unsigned char)m_headerZ64.at(0x38);
-    qDebug() << "Raw media type byte:" << mediaType << "Char:" << QChar(mediaType);
     
     // If the media type byte is 0, try to determine it from other header info
     // Most ROMs should be cartridges (Type 'N')
@@ -213,21 +204,11 @@ void RomParser::calculateCRC(uint32_t& crc1, uint32_t& crc2) const
                 (static_cast<uint32_t>(static_cast<unsigned char>(m_headerZ64[0x16])) << 8) |
                 (static_cast<uint32_t>(static_cast<unsigned char>(m_headerZ64[0x17]))));
         
-        // Debug the actual bytes we're reading
-        qDebug() << "Raw CRC1 bytes:" 
-                << QString::number(static_cast<unsigned char>(m_headerZ64[0x10]), 16).toUpper().rightJustified(2, '0')
-                << QString::number(static_cast<unsigned char>(m_headerZ64[0x11]), 16).toUpper().rightJustified(2, '0')
-                << QString::number(static_cast<unsigned char>(m_headerZ64[0x12]), 16).toUpper().rightJustified(2, '0')
-                << QString::number(static_cast<unsigned char>(m_headerZ64[0x13]), 16).toUpper().rightJustified(2, '0');
-                
-        qDebug() << "Raw CRC2 bytes:" 
-                << QString::number(static_cast<unsigned char>(m_headerZ64[0x14]), 16).toUpper().rightJustified(2, '0')
-                << QString::number(static_cast<unsigned char>(m_headerZ64[0x15]), 16).toUpper().rightJustified(2, '0')
-                << QString::number(static_cast<unsigned char>(m_headerZ64[0x16]), 16).toUpper().rightJustified(2, '0')
-                << QString::number(static_cast<unsigned char>(m_headerZ64[0x17]), 16).toUpper().rightJustified(2, '0');
-                
-        qDebug() << "Calculated CRC1:" << QString::number(crc1, 16).toUpper().rightJustified(8, '0')
-                << "CRC2:" << QString::number(crc2, 16).toUpper().rightJustified(8, '0');
+        // Only log problematic CRCs
+        if (crc1 == 0 || crc2 == 0) {
+            qWarning() << "ROM has unusual CRCs:" << QString::number(crc1, 16).toUpper()
+                    << QString::number(crc2, 16).toUpper();
+        }
     }
 }
 

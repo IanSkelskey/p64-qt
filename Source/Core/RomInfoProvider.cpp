@@ -26,17 +26,27 @@ RomInfoProvider::RomInfoProvider() :
     m_players(1),
     m_forceFeedback(false),
     m_productID(""),
-    m_status("Unknown"),  // Initialize status
+    m_status("Unknown"),
     m_romParser(new RomParser())
 {
     if (m_countryNames.isEmpty()) {
         initializeCountryNames();
+    }
+    
+    // Initialize DatabaseManager with path to the database
+    QString dbPath = QDir(QCoreApplication::applicationDirPath()).filePath("database.sqlite");
+    m_dbManager = new DatabaseManager(dbPath);
+    
+    // Open database connection
+    if (!m_dbManager->open()) {
+        qWarning() << "Failed to open database at:" << dbPath;
     }
 }
 
 RomInfoProvider::~RomInfoProvider()
 {
     delete m_romParser;
+    delete m_dbManager; // Clean up database manager
 }
 
 void RomInfoProvider::initializeCountryNames()
@@ -95,10 +105,10 @@ bool RomInfoProvider::openRomFile(const QString& filePath)
     
     // Detect ROM byte format (Z64, N64, V64)
     m_byteFormat = m_romParser->detectByteFormat();
-    qDebug() << "Detected ROM format:" << 
-        (m_byteFormat == Format_Z64 ? "Z64 (Big Endian)" : 
-         m_byteFormat == Format_N64 ? "N64 (Byte-swapped)" : 
-         m_byteFormat == Format_V64 ? "V64 (Little Endian)" : "Unknown");
+    // Only log format if it's unusual
+    if (m_byteFormat == Format_Unknown) {
+        qWarning() << "Unknown ROM format detected for:" << filePath;
+    }
     
     // Get ROM size
     m_romSize = romFile.size();
@@ -154,219 +164,96 @@ void RomInfoProvider::loadRDBInfo()
     
     // Format country code consistently with database format (hex value without sign extension)
     QString countryHex = QString::number(countryByte, 16).toUpper().rightJustified(2, '0');
-    qDebug() << "Raw Country Byte:" << QString::number(countryByte) << "Hex:" << countryHex;
     
-    // Create both key formats to try - with and without brackets
-    QString crcKey = QString("%1-%2-C:%3")
-                         .arg(QString::number(m_crc1, 16).toUpper().rightJustified(8, '0'))
-                         .arg(QString::number(m_crc2, 16).toUpper().rightJustified(8, '0'))
-                         .arg(countryHex);
+    // Check if database is usable
+    if (!m_dbManager || !m_dbManager->isDatabaseLoaded()) {
+        qWarning() << "Database is not loaded, ROM info cannot be retrieved";
+        return;
+    }
     
-    QString bracketCrcKey = QString("[%1-%2-C:%3]")
-                         .arg(QString::number(m_crc1, 16).toUpper().rightJustified(8, '0'))
-                         .arg(QString::number(m_crc2, 16).toUpper().rightJustified(8, '0'))
-                         .arg(countryHex);
-
-    qDebug() << "Looking for ROM with CRC keys:" << crcKey << bracketCrcKey;
-
-    // Check resources first, then fall back to file system
-    QString rdbPath, rdxPath;
-    bool useResources = false;
-
-    // Check if resources exist using QFile::exists
-    if (QFile::exists(":/database/Project64.rdb") && 
-        QFile::exists(":/database/Project64.rdx")) {
-        rdbPath = ":/database/Project64.rdb";
-        rdxPath = ":/database/Project64.rdx";
-        useResources = true;
-        qDebug() << "Using RDB/RDX from Qt resources";
+    // Check if required tables exist
+    QStringList tables = m_dbManager->getTables();
+    if (!tables.contains("games", Qt::CaseInsensitive)) {
+        qWarning() << "Database does not contain 'games' table. Available tables:" << tables.join(", ");
+        return;
+    }
+    
+    // Get complete ROM information
+    auto gameInfo = m_dbManager->getRomCompleteInfo(m_crc1, m_crc2, countryHex);
+    
+    if (!gameInfo.empty()) {
+        // Process ROM info silently - only log if needed for diagnostics
+        if (gameInfo.count("good_name") && gameInfo["good_name"].isValid()) {
+            m_goodName = gameInfo["good_name"].toString();
+        }
+        
+        if (gameInfo.count("status") && gameInfo["status"].isValid()) {
+            m_status = gameInfo["status"].toString();
+        }
+        
+        if (gameInfo.count("internal_name") && gameInfo["internal_name"].isValid() && m_internalName.isEmpty()) {
+            m_internalName = gameInfo["internal_name"].toString();
+        }
+        
+        if (gameInfo.count("developer_name") && gameInfo["developer_name"].isValid()) {
+            m_developer = gameInfo["developer_name"].toString();
+        }
+        
+        if (gameInfo.count("release_date") && gameInfo["release_date"].isValid()) {
+            m_releaseDate = gameInfo["release_date"].toString();
+        }
+        
+        if (gameInfo.count("genre_name") && gameInfo["genre_name"].isValid()) {
+            m_genre = gameInfo["genre_name"].toString();
+        }
+        
+        if (gameInfo.count("players") && gameInfo["players"].isValid()) {
+            m_players = gameInfo["players"].toInt();
+        }
+        
+        if (gameInfo.count("force_feedback") && gameInfo["force_feedback"].isValid()) {
+            m_forceFeedback = gameInfo["force_feedback"].toBool();
+        }
+        
+        // Map cartridge_code to productID as mentioned in the requirements
+        if (gameInfo.count("cartridge_code") && gameInfo["cartridge_code"].isValid()) {
+            m_productID = gameInfo["cartridge_code"].toString();
+        }
+        
+        // Single summary debug message instead of multiple per-property messages
+        qDebug() << "ROM info loaded:" << m_goodName << "(" << m_status << ")";
     } else {
-        // Fall back to file system
-        rdbPath = QDir(QCoreApplication::applicationDirPath()).filePath("Config/Project64.rdb");
-        rdxPath = QDir(QCoreApplication::applicationDirPath()).filePath("Config/Project64.rdx");
-        qDebug() << "Using RDB/RDX from file system:" << rdbPath << rdxPath;
-    }
-
-    // Load and check database files 
-    QSettings rdbSettings(rdbPath, QSettings::IniFormat);
-    QSettings rdxSettings(rdxPath, QSettings::IniFormat);
-    
-    QStringList rdbGroups = rdbSettings.childGroups();
-    QStringList rdxGroups = rdxSettings.childGroups();
-    
-    qDebug() << "RDB contains" << rdbGroups.size() << "entries";
-    qDebug() << "RDX contains" << rdxGroups.size() << "entries";
-    
-    // Debug the database keys to help diagnose the issue
-    if (rdbGroups.size() < 50) { // Only dump if there aren't too many
-        qDebug() << "RDB contains keys:" << rdbGroups.join(", ");
-    } else {
-        // Show a sample of keys
-        qDebug() << "RDB sample keys:" << rdbGroups.mid(0, 5).join(", ");
-    }
-    
-    // Generate all possible key formats for more flexibility
-    QStringList possibleKeys = {bracketCrcKey, crcKey};
-    
-    // Try without country code as a fallback
-    possibleKeys.append(QString("%1-%2")
-                        .arg(QString::number(m_crc1, 16).toUpper().rightJustified(8, '0'))
-                        .arg(QString::number(m_crc2, 16).toUpper().rightJustified(8, '0')));
-    
-    possibleKeys.append(QString("[%1-%2]")
-                        .arg(QString::number(m_crc1, 16).toUpper().rightJustified(8, '0'))
-                        .arg(QString::number(m_crc2, 16).toUpper().rightJustified(8, '0')));
-    
-    // Try common country codes used in the database
-    QStringList countryCodes = {"45", "44", "4A", "50", "49", "53", "55", "46", "58", "59", "40", "00"};
-    for (const QString& cc : countryCodes) {
-        possibleKeys.append(QString("[%1-%2-C:%3]")
-                             .arg(QString::number(m_crc1, 16).toUpper().rightJustified(8, '0'))
-                             .arg(QString::number(m_crc2, 16).toUpper().rightJustified(8, '0'))
-                             .arg(cc));
-    }
-    
-    //------------------------------------------------------
-    // FIRST: Search RDB database for ROM information
-    //------------------------------------------------------
-    bool foundInRdb = false;
-    QString foundKey;
-    for (const QString& tryKey : possibleKeys) {
-        if (rdbGroups.contains(tryKey)) {
-            qDebug() << "Found ROM in RDB with key:" << tryKey;
-            rdbSettings.beginGroup(tryKey);
-            foundInRdb = true;
-            foundKey = tryKey;
-            break;
-        }
-    }
-    
-    // If found in RDB, process the information
-    if (foundInRdb) {
-        QStringList keys = rdbSettings.childKeys();
-        qDebug() << "RDB entry contains keys:" << keys.join(", ");
+        // Only log when no match is found - this is potentially a problem
+        qDebug() << "ROM not found in database for CRC:" 
+                 << QString::number(m_crc1, 16).toUpper() << "-" 
+                 << QString::number(m_crc2, 16).toUpper();
         
-        // Load available information
-        if (rdbSettings.contains("Good Name")) {
-            m_goodName = rdbSettings.value("Good Name").toString();
-            qDebug() << "Loaded Good Name from RDB:" << m_goodName;
-        }
-        
-        // Add check for Status field
-        if (rdbSettings.contains("Status")) {
-            m_status = rdbSettings.value("Status").toString();
-            qDebug() << "Loaded Status from RDB:" << m_status;
-        }
-        
-        if (rdbSettings.contains("Internal Name")) {
-            // If internal name is blank or missing from ROM header, use from RDB
-            if (m_internalName.isEmpty()) {
-                m_internalName = rdbSettings.value("Internal Name").toString();
-                qDebug() << "Loaded Internal Name from RDB:" << m_internalName;
+        // Try fallback lookups if not found by CRC
+        auto gameInfoByCartridge = m_dbManager->getRomInfoByCartridgeCode(m_cartID);
+        if (!gameInfoByCartridge.empty()) {
+            // Successful fallback - no need to log details
+            if (gameInfoByCartridge.count("good_name") && gameInfoByCartridge["good_name"].isValid()) {
+                m_goodName = gameInfoByCartridge["good_name"].toString();
+            }
+            
+            if (gameInfoByCartridge.count("cartridge_code") && gameInfoByCartridge["cartridge_code"].isValid()) {
+                m_productID = gameInfoByCartridge["cartridge_code"].toString();
+            }
+        } else if (!m_internalName.isEmpty()) {
+            // Try lookup by internal name if available
+            auto gameInfoByName = m_dbManager->getRomInfoByInternalName(m_internalName);
+            if (!gameInfoByName.empty()) {
+                if (gameInfoByName.count("good_name") && gameInfoByName["good_name"].isValid()) {
+                    m_goodName = gameInfoByName["good_name"].toString();
+                }
             }
         }
         
-        // Some RDB files might contain extended information directly
-        if (rdbSettings.contains("Developer")) {
-            m_developer = rdbSettings.value("Developer").toString();
-            qDebug() << "Loaded Developer from RDB:" << m_developer;
-        }
-        
-        if (rdbSettings.contains("Release Date")) {
-            m_releaseDate = rdbSettings.value("Release Date").toString();
-            qDebug() << "Loaded Release Date from RDB:" << m_releaseDate;
-        }
-        
-        rdbSettings.endGroup();
-    } else {
-        qDebug() << "ROM not found in RDB";
-    }
-    
-    //------------------------------------------------------
-    // SECOND: Search RDX database for extended information
-    //------------------------------------------------------
-    bool foundInRdx = false;
-    for (const QString& tryKey : possibleKeys) {
-        if (rdxGroups.contains(tryKey)) {
-            qDebug() << "Found ROM in RDX with key:" << tryKey;
-            rdxSettings.beginGroup(tryKey);
-            foundInRdx = true;
-            break;
+        if (m_goodName.isEmpty()) {
+            // Only log complete failure to find ROM info
+            qWarning() << "No ROM info found in database for:" << m_internalName << "Cart ID:" << m_cartID;
         }
     }
-    
-    // If found in RDX, load the extended information
-    if (foundInRdx) {
-        QStringList keys = rdxSettings.childKeys();
-        qDebug() << "RDX entry contains keys:" << keys.join(", ");
-        
-        // Good Name might be in the RDX too
-        if (rdxSettings.contains("Good Name") && m_goodName.isEmpty()) {
-            m_goodName = rdxSettings.value("Good Name").toString();
-            qDebug() << "Loaded Good Name from RDX:" << m_goodName;
-        }
-        
-        if (rdxSettings.contains("Developer")) {
-            m_developer = rdxSettings.value("Developer").toString();
-            qDebug() << "Loaded Developer from RDX:" << m_developer;
-        }
-        
-        if (rdxSettings.contains("ReleaseDate")) {
-            m_releaseDate = rdxSettings.value("ReleaseDate").toString();
-            qDebug() << "Loaded ReleaseDate from RDX:" << m_releaseDate;
-        } else if (rdxSettings.contains("Release Date")) {
-            // Try alternative key name
-            m_releaseDate = rdxSettings.value("Release Date").toString();
-            qDebug() << "Loaded Release Date from RDX:" << m_releaseDate;
-        }
-        
-        if (rdxSettings.contains("Genre")) {
-            m_genre = rdxSettings.value("Genre").toString();
-            qDebug() << "Loaded Genre from RDX:" << m_genre;
-        }
-        
-        if (rdxSettings.contains("Players")) {
-            bool ok;
-            int players = rdxSettings.value("Players").toInt(&ok);
-            if (ok) {
-                m_players = players;
-                qDebug() << "Loaded Players from RDX:" << m_players;
-            }
-        }
-        
-        if (rdxSettings.contains("ForceFeedback")) {
-            QString ffValue = rdxSettings.value("ForceFeedback").toString();
-            m_forceFeedback = (ffValue.compare("Yes", Qt::CaseInsensitive) == 0) || 
-                              (ffValue.compare("true", Qt::CaseInsensitive) == 0) ||
-                              (ffValue.toInt() != 0);
-            qDebug() << "Loaded ForceFeedback from RDX:" << m_forceFeedback;
-        }
-        
-        // Load ProductID if available
-        if (rdxSettings.contains("ProductID")) {
-            m_productID = rdxSettings.value("ProductID").toString();
-            qDebug() << "Loaded ProductID from RDX:" << m_productID;
-        }
-        
-        // Load Status if available and not already set
-        if (m_status == "Unknown" && rdxSettings.contains("Status")) {
-            m_status = rdxSettings.value("Status").toString();
-            qDebug() << "Loaded Status from RDX:" << m_status;
-        }
-        
-        rdxSettings.endGroup();
-    } else {
-        qDebug() << "ROM not found in RDX";
-    }
-
-    // Debug output to verify data loading
-    qDebug() << "ROM info loaded - Good Name:" << m_goodName
-             << "Developer:" << m_developer 
-             << "Release Date:" << m_releaseDate
-             << "Genre:" << m_genre 
-             << "Players:" << m_players
-             << "Status:" << m_status
-             << "ProductID:" << m_productID;
 }
 
 QString RomInfoProvider::getInternalName() const
@@ -392,7 +279,10 @@ QString RomInfoProvider::getCartID() const
 QString RomInfoProvider::getMediaType() const
 {
     QString mediaType = m_romParser->extractMediaType();
-    qDebug() << "Extracted media type:" << mediaType;
+    // Only log unusual media types
+    if (mediaType != "N64 Cartridge" && !mediaType.isEmpty()) {
+        qDebug() << "Non-standard media type detected:" << mediaType;
+    }
     return mediaType;
 }
 
@@ -540,7 +430,10 @@ void RomInfoProvider::detectCICChip()
         }
     }
     
-    qDebug() << "Detected CIC chip:" << m_cicChip;
+    // Only log unusual CIC chips
+    if (m_cicChip != CIC_NUS_6102 && m_cicChip != CIC_NUS_6103 && m_cicChip != CIC_UNKNOWN) {
+        qDebug() << "Non-standard CIC chip detected:" << m_cicChip;
+    }
 }
 
 } // namespace QT_UI

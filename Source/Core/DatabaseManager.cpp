@@ -2,6 +2,8 @@
 #include <QDebug>
 #include <QSqlRecord>
 #include <QRegularExpression>
+#include <QSqlDriver>
+#include <QFile>  // Add this include for QFile class
 
 DatabaseManager::DatabaseManager(const QString& dbPath) : m_dbPath(dbPath), m_db(QSqlDatabase::addDatabase("QSQLITE")) {
     m_db.setDatabaseName(m_dbPath);
@@ -16,6 +18,14 @@ bool DatabaseManager::open() {
         qWarning() << "Failed to open database:" << m_db.lastError().text();
         return false;
     }
+    
+    // Only log schema info if tables are missing
+    QStringList tables = getTables();
+    if (tables.isEmpty()) {
+        qWarning() << "Database opened but contains no tables:" << m_dbPath;
+        logDatabaseSchema();
+    }
+    
     return true;
 }
 
@@ -437,4 +447,129 @@ QString DatabaseManager::getDatabaseVersion() const {
     // Try to get database version from metadata table
     QVariant version = executeSingleValueQuery("SELECT value FROM metadata WHERE key = 'version' LIMIT 1");
     return version.isValid() ? version.toString() : QString("Unknown");
+}
+
+QStringList DatabaseManager::getTables() const {
+    if (!m_db.isOpen()) {
+        return QStringList();
+    }
+    
+    return m_db.tables();
+}
+
+QStringList DatabaseManager::getColumns(const QString& tableName) const {
+    QStringList columns;
+    
+    if (!m_db.isOpen()) {
+        return columns;
+    }
+    
+    QSqlQuery query(m_db);
+    QString sql = QString("PRAGMA table_info(%1)").arg(tableName);
+    
+    if (!query.exec(sql)) {
+        qWarning() << "Failed to get columns for" << tableName << ":" << query.lastError().text();
+        return columns;
+    }
+    
+    while (query.next()) {
+        QString columnName = query.value("name").toString();
+        QString type = query.value("type").toString();
+        bool notNull = query.value("notnull").toBool();
+        QVariant defaultValue = query.value("dflt_value");
+        bool isPk = query.value("pk").toBool();
+        
+        QString columnInfo = columnName + " (" + type;
+        if (isPk) columnInfo += ", PRIMARY KEY";
+        if (notNull) columnInfo += ", NOT NULL";
+        if (defaultValue.isValid()) columnInfo += ", DEFAULT=" + defaultValue.toString();
+        columnInfo += ")";
+        
+        columns << columnInfo;
+    }
+    
+    return columns;
+}
+
+void DatabaseManager::logDatabaseSchema() const {
+    if (!m_db.isOpen()) {
+        qWarning() << "Cannot log schema: Database not open";
+        return;
+    }
+    
+    qDebug() << "=== DATABASE SCHEMA ===";
+    
+    // Just log basic database info and size
+    QFile dbFile(m_dbPath);
+    if (dbFile.exists()) {
+        qDebug() << "Size:" << QString::number(dbFile.size() / 1024) << "KB";
+    }
+    
+    QStringList tables = getTables();
+    qDebug() << "Tables (" << tables.size() << "):" << tables.join(", ");
+    
+    // Skip detailed column logging unless needed for debugging
+    // Uncomment the following code for detailed schema logging if needed
+    /*
+    if (!tables.isEmpty()) {
+        for (const QString& table : tables) {
+            QStringList columns = getColumns(table);
+            qDebug() << "Table:" << table << "has" << columns.size() << "columns:";
+            for (const QString& column : columns) {
+                qDebug() << "  -" << column;
+            }
+        }
+    }
+    */
+    
+    qDebug() << "=== END DATABASE SCHEMA ===";
+}
+
+void DatabaseManager::logBasicDatabaseInfo() const {
+    if (!m_db.isOpen()) {
+        return;
+    }
+    
+    QStringList tables = getTables();
+    if (tables.size() < 10) {
+        // Only log tables if there are few of them - might indicate a problem
+        qDebug() << "Database contains only" << tables.size() << "tables:" << tables.join(", ");
+    }
+    
+    // Log version only on debug builds or if it's missing
+    QVariant version = executeSingleValueQuery("SELECT value FROM metadata WHERE key = 'version' LIMIT 1");
+    if (!version.isValid()) {
+        qWarning() << "Database has no version information";
+    }
+}
+
+QString DatabaseManager::getDatabaseInfo() const {
+    QString info;
+    
+    if (!m_db.isOpen()) {
+        return "Database not open";
+    }
+    
+    // Database type
+    info += "Type: " + m_db.driverName() + "\n";
+    
+    // Connection name
+    info += "Connection name: " + m_db.connectionName() + "\n";
+    
+    // Database path
+    info += "Path: " + m_dbPath + "\n";
+    
+    // Database size
+    QFile dbFile(m_dbPath);
+    if (dbFile.exists()) {
+        info += "Size: " + QString::number(dbFile.size() / 1024) + " KB\n";
+    }
+    
+    // SQLite version
+    QVariant versionVar = executeSingleValueQuery("SELECT sqlite_version()");
+    if (versionVar.isValid()) {
+        info += "SQLite version: " + versionVar.toString() + "\n";
+    }
+    
+    return info;
 }

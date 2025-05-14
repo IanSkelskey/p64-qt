@@ -116,6 +116,15 @@ target_include_directories(QtUI PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+# Copy the database file to the build directory
+add_custom_command(
+    TARGET QtUI POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_CURRENT_SOURCE_DIR}/database.sqlite
+        $<TARGET_FILE_DIR:QtUI>/database.sqlite
+    COMMENT "Copying database.sqlite to build directory"
+)
+
 set_target_properties(QtUI PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -128,6 +137,11 @@ install(TARGETS QtUI
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Also install the database file
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/database.sqlite
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 qt_finalize_executable(QtUI)

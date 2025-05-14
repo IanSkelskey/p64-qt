@@ -64,6 +64,13 @@ public:
     QString getVideoSettingByCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode, const QString& settingName);
     QString getAudioSettingByCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode, const QString& settingName);
     
+    // Schema inspection methods
+    QStringList getTables() const;
+    QStringList getColumns(const QString& tableName) const;
+    void logDatabaseSchema() const;
+    void logBasicDatabaseInfo() const;  // Add this method
+    QString getDatabaseInfo() const;
+
     // Additional helper functions
     static QString formatCRC(uint32_t crc);
     static QString normalizeCountryCode(const QString& countryCode);
