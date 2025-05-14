@@ -12,7 +12,7 @@ class IconHelper
 {
 public:
     // File menu icons
-    static QIcon getOpenIcon() { return getThemedIcon("folder-open-line"); }
+    static QIcon getOpenIcon() { return getThemedIcon("cartridge-line"); }
     static QIcon getRomInfoIcon() { return getThemedIcon("file-search-line"); }
     static QIcon getPlayIcon() { return getThemedIcon("play-line"); }
     static QIcon getStopIcon() { return getThemedIcon("shut-down-line"); }

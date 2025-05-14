@@ -1,5 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
+    <!-- Flags -->
     <file>icons/flags/usa.svg</file>
     <file>icons/flags/japan.svg</file>
     <file>icons/flags/europe.svg</file>
@@ -8,9 +9,12 @@
     <file>icons/flags/italy.svg</file>
     <file>icons/flags/spain.svg</file>
     <file>icons/flags/australia.svg</file>
+    <!-- App icons -->
     <file>icons/pj64.ico</file>
     <file>images/default-label.png</file>
     <file>images/logo.png</file>
+    <!-- Black icons for light theme -->
+    <file>icons/black/cartridge-line.svg</file>
     <file>icons/black/arrow-left-right-line.svg</file>
     <file>icons/black/artboard-2-line.svg</file>
     <file>icons/black/at.svg</file>
@@ -112,6 +116,8 @@
     <file>icons/black/window-2-line.svg</file>
     <file>icons/black/zoom-in-line.svg</file>
     <file>icons/black/zoom-out-line.svg</file>
+    <!-- White icons for dark theme -->
+    <file>icons/white/cartridge-line.svg</file>
     <file>icons/white/arrow-left-right-line.svg</file>
     <file>icons/white/artboard-2-line.svg</file>
     <file>icons/white/at.svg</file>
