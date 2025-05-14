@@ -77,6 +77,12 @@ public:
     bool isDatabaseLoaded() const;
     QString getDatabaseVersion() const;
 
+    // New methods for rom_browser_view
+    std::vector<std::map<QString, QVariant>> getAllRomBrowserEntries();
+    std::map<QString, QVariant> getRomBrowserEntryByCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode);
+    std::map<QString, QVariant> getRomBrowserEntryByRomId(const QString& romId);
+    std::vector<std::map<QString, QVariant>> searchRomBrowserEntries(const QString& searchTerm, int limit = 100);
+
 private:
     QString m_dbPath;
     QSqlDatabase m_db;
@@ -91,6 +97,9 @@ private:
     
     // Helper to generate multiple ROM ID formats for flexible lookup
     QStringList generatePossibleRomIds(uint32_t crc1, uint32_t crc2, const QString& countryCode);
+
+    // Helper to check if view exists
+    bool viewExists(const QString& viewName) const;
 };
 
 #endif // DATABASEMANAGER_H

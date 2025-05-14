@@ -26,6 +26,11 @@ bool DatabaseManager::open() {
         logDatabaseSchema();
     }
     
+    // Check if rom_browser_view exists
+    if (!viewExists("rom_browser_view")) {
+        qWarning() << "rom_browser_view does not exist in the database, some operations may be slower";
+    }
+    
     return true;
 }
 
@@ -272,7 +277,95 @@ std::map<QString, QVariant> DatabaseManager::getRomInfoByInternalName(const QStr
     return executeSingleRowQuery(query);
 }
 
+bool DatabaseManager::viewExists(const QString& viewName) const {
+    if (!m_db.isOpen()) {
+        return false;
+    }
+    
+    // Check if view exists in sqlite_master
+    QSqlQuery query(m_db);
+    query.prepare("SELECT name FROM sqlite_master WHERE type='view' AND name=:viewName");
+    query.bindValue(":viewName", viewName);
+    
+    if (!query.exec() || !query.next()) {
+        return false;
+    }
+    
+    return true;
+}
+
+std::vector<std::map<QString, QVariant>> DatabaseManager::getAllRomBrowserEntries() {
+    if (!viewExists("rom_browser_view")) {
+        qWarning() << "rom_browser_view not found, falling back to slower method";
+        return getAllGames();
+    }
+    
+    return executeQuery("SELECT * FROM rom_browser_view");
+}
+
+std::map<QString, QVariant> DatabaseManager::getRomBrowserEntryByCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    if (!viewExists("rom_browser_view")) {
+        return getRomCompleteInfo(crc1, crc2, countryCode);
+    }
+    
+    QStringList possibleIds = generatePossibleRomIds(crc1, crc2, countryCode);
+    
+    // Build a query with all possible ROM IDs
+    QStringList conditions;
+    for (const QString& id : possibleIds) {
+        conditions << QString("rom_id = '%1'").arg(id);
+    }
+    
+    QString query = QString("SELECT * FROM rom_browser_view WHERE %1 LIMIT 1").arg(conditions.join(" OR "));
+    
+    return executeSingleRowQuery(query);
+}
+
+std::map<QString, QVariant> DatabaseManager::getRomBrowserEntryByRomId(const QString& romId) {
+    if (!viewExists("rom_browser_view")) {
+        return getGameByRomId(romId);
+    }
+    
+    QString query = QString("SELECT * FROM rom_browser_view WHERE rom_id = '%1' LIMIT 1").arg(romId);
+    return executeSingleRowQuery(query);
+}
+
+std::vector<std::map<QString, QVariant>> DatabaseManager::searchRomBrowserEntries(const QString& searchTerm, int limit) {
+    if (!viewExists("rom_browser_view")) {
+        // Fallback to a more complex join query if the view doesn't exist
+        QString query = QString(
+            "SELECT g.*, r.code AS region_code, r.name AS region_name, "
+            "d.name AS developer_name, gen.name AS genre_name, cc.name AS cartridge_color_name "
+            "FROM games g "
+            "LEFT JOIN regions r ON g.region_id = r.id "
+            "LEFT JOIN developers d ON g.developer_id = d.id "
+            "LEFT JOIN genres gen ON g.genre_id = gen.id "
+            "LEFT JOIN cartridge_colors cc ON g.cartridge_color_id = cc.id "
+            "WHERE g.good_name LIKE '%%%1%%' OR g.internal_name LIKE '%%%1%%' OR g.cartridge_code LIKE '%%%1%%' "
+            "LIMIT %2").arg(searchTerm).arg(limit);
+        
+        return executeQuery(query);
+    }
+    
+    QString query = QString(
+        "SELECT * FROM rom_browser_view "
+        "WHERE good_name LIKE '%%%1%%' OR internal_name LIKE '%%%1%%' OR cartridge_code LIKE '%%%1%%' "
+        "LIMIT %2").arg(searchTerm).arg(limit);
+    
+    return executeQuery(query);
+}
+
+// Optimize existing method to use the view when possible
 std::map<QString, QVariant> DatabaseManager::getRomCompleteInfo(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    // Try getting info from the view first if it exists
+    if (viewExists("rom_browser_view")) {
+        auto gameInfo = getRomBrowserEntryByCRC(crc1, crc2, countryCode);
+        if (!gameInfo.empty()) {
+            return gameInfo;
+        }
+    }
+    
+    // Otherwise use the original implementation as fallback
     // Get the basic ROM info
     auto gameInfo = getRomInfoByCRC(crc1, crc2, countryCode);
     

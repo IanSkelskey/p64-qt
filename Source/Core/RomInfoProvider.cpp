@@ -171,15 +171,8 @@ void RomInfoProvider::loadRDBInfo()
         return;
     }
     
-    // Check if required tables exist
-    QStringList tables = m_dbManager->getTables();
-    if (!tables.contains("games", Qt::CaseInsensitive)) {
-        qWarning() << "Database does not contain 'games' table. Available tables:" << tables.join(", ");
-        return;
-    }
-    
-    // Get complete ROM information
-    auto gameInfo = m_dbManager->getRomCompleteInfo(m_crc1, m_crc2, countryHex);
+    // Use the optimized rom_browser_view to get ROM information in a single query
+    auto gameInfo = m_dbManager->getRomBrowserEntryByCRC(m_crc1, m_crc2, countryHex);
     
     if (!gameInfo.empty()) {
         // Process ROM info silently - only log if needed for diagnostics
