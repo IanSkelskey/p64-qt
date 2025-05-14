@@ -41,7 +41,7 @@ std::vector<std::map<QString, QVariant>> DatabaseManager::executeQuery(const QSt
 
     QSqlQuery q(m_db);
     if (!q.exec(query)) {
-        qWarning() << "Query failed:" << q.lastError().text();
+        qWarning() << "Query failed:" << q.lastError().text() << "Query:" << query;
         return results;
     }
 
@@ -54,6 +54,19 @@ std::vector<std::map<QString, QVariant>> DatabaseManager::executeQuery(const QSt
     }
 
     return results;
+}
+
+std::map<QString, QVariant> DatabaseManager::executeSingleRowQuery(const QString& query) {
+    auto results = executeQuery(query);
+    return results.empty() ? std::map<QString, QVariant>() : results.front();
+}
+
+QVariant DatabaseManager::executeSingleValueQuery(const QString& query) {
+    QSqlQuery q(m_db);
+    if (!q.exec(query) || !q.next()) {
+        return QVariant();
+    }
+    return q.value(0);
 }
 
 std::map<QString, QVariant> DatabaseManager::getGameByRomId(const QString& romId) {
@@ -93,59 +106,159 @@ std::map<QString, QVariant> DatabaseManager::getCartridgeColorById(int colorId) 
     return results.empty() ? std::map<QString, QVariant>() : results.front();
 }
 
-std::map<QString, QVariant> DatabaseManager::executeSingleRowQuery(const QString& query) {
-    auto results = executeQuery(query);
-    return results.empty() ? std::map<QString, QVariant>() : results.front();
-}
-
 QString DatabaseManager::createRomIdFromCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
     // Format similar to Project64 RDB format: CRC1-CRC2-C:CC
-    // For example: A1B2C3D4-E5F60708-C:45
     return QString("%1-%2-C:%3")
-        .arg(QString::number(crc1, 16).toUpper().rightJustified(8, '0'))
-        .arg(QString::number(crc2, 16).toUpper().rightJustified(8, '0'))
-        .arg(countryCode);
+        .arg(formatCRC(crc1))
+        .arg(formatCRC(crc2))
+        .arg(normalizeCountryCode(countryCode));
 }
 
-std::map<QString, QVariant> DatabaseManager::getRomInfoByCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
-    QString romId = createRomIdFromCRC(crc1, crc2, countryCode);
+QString DatabaseManager::formatCRC(uint32_t crc) {
+    return QString::number(crc, 16).toUpper().rightJustified(8, '0');
+}
+
+QString DatabaseManager::normalizeCountryCode(const QString& countryCode) {
+    // Ensure country code is properly formatted (2 hex digits)
+    QString normalized = countryCode;
     
-    // Try exact match first
-    auto result = getGameByRomId(romId);
+    // Remove any non-hex characters
+    normalized.remove(QRegExp("[^0-9A-Fa-f]"));
     
-    // If not found, try alternate formats
-    if (result.empty()) {
-        // Try with brackets
-        QString bracketRomId = QString("[%1]").arg(romId);
-        result = getGameByRomId(bracketRomId);
-        
-        // Try without country code
-        if (result.empty()) {
-            result = getRomInfoByCRCWithoutCountry(crc1, crc2);
+    // If the country code is a single character, try to convert to hex
+    if (normalized.length() == 1) {
+        bool ok;
+        char c = normalized.at(0).toLatin1();
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+            normalized = QString::number(static_cast<int>(c), 16).toUpper();
         }
     }
     
-    return result;
+    // Ensure we have 2 hex digits
+    normalized = normalized.rightJustified(2, '0');
+    
+    return normalized;
+}
+
+QStringList DatabaseManager::generatePossibleRomIds(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    QStringList results;
+    
+    QString formattedCRC1 = formatCRC(crc1);
+    QString formattedCRC2 = formatCRC(crc2);
+    QString normalizedCountry = normalizeCountryCode(countryCode);
+    
+    // Generate various formats that might be in the database
+    
+    // 1. Standard format
+    QString standard = QString("%1-%2-C:%3")
+        .arg(formattedCRC1)
+        .arg(formattedCRC2)
+        .arg(normalizedCountry);
+    results << standard;
+    
+    // 2. With brackets
+    results << QString("[%1]").arg(standard);
+    
+    // 3. Without country code
+    QString withoutCountry = QString("%1-%2")
+        .arg(formattedCRC1)
+        .arg(formattedCRC2);
+    results << withoutCountry;
+    
+    // 4. Without country code with brackets
+    results << QString("[%1]").arg(withoutCountry);
+    
+    // 5. Try common country code alternatives (45=USA, 4A=Japan, 50=Europe, etc.)
+    QStringList commonCountries = {"45", "4A", "50", "49", "53", "55", "46", "58", "59"};
+    for (const QString& cc : commonCountries) {
+        if (cc != normalizedCountry) {
+            results << QString("%1-%2-C:%3")
+                .arg(formattedCRC1)
+                .arg(formattedCRC2)
+                .arg(cc);
+                
+            results << QString("[%1-%2-C:%3]")
+                .arg(formattedCRC1)
+                .arg(formattedCRC2)
+                .arg(cc);
+        }
+    }
+    
+    return results;
+}
+
+int DatabaseManager::getGameIdFromCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    QStringList possibleIds = generatePossibleRomIds(crc1, crc2, countryCode);
+    
+    // Build a query with all possible ROM IDs
+    QStringList conditions;
+    for (const QString& id : possibleIds) {
+        conditions << QString("rom_id = '%1'").arg(id);
+    }
+    
+    QString query = QString("SELECT id FROM games WHERE %1 LIMIT 1").arg(conditions.join(" OR "));
+    
+    QVariant result = executeSingleValueQuery(query);
+    if (result.isValid()) {
+        return result.toInt();
+    }
+    
+    return -1; // Game not found
+}
+
+std::map<QString, QVariant> DatabaseManager::getRomInfoByCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    QStringList possibleIds = generatePossibleRomIds(crc1, crc2, countryCode);
+    
+    // Build a query with all possible ROM IDs
+    QStringList conditions;
+    for (const QString& id : possibleIds) {
+        conditions << QString("rom_id = '%1'").arg(id);
+    }
+    
+    QString query = QString("SELECT * FROM games WHERE %1 LIMIT 1").arg(conditions.join(" OR "));
+    
+    return executeSingleRowQuery(query);
 }
 
 std::map<QString, QVariant> DatabaseManager::getRomInfoByCRCWithoutCountry(uint32_t crc1, uint32_t crc2) {
     // Try to find a ROM by CRC values only, ignoring country code
     QString crcOnly = QString("%1-%2")
-        .arg(QString::number(crc1, 16).toUpper().rightJustified(8, '0'))
-        .arg(QString::number(crc2, 16).toUpper().rightJustified(8, '0'));
+        .arg(formatCRC(crc1))
+        .arg(formatCRC(crc2));
     
-    // Try without brackets first
-    auto result = executeSingleRowQuery(
-        QString("SELECT * FROM games WHERE rom_id LIKE '%1%'").arg(crcOnly));
+    // Try both with and without brackets, using LIKE to match any country code
+    QString query = QString("SELECT * FROM games WHERE rom_id LIKE '%1%' OR rom_id LIKE '[%1]%' LIMIT 1")
+        .arg(crcOnly);
     
-    // Try with brackets
-    if (result.empty()) {
-        QString bracketCrcOnly = QString("[%1]").arg(crcOnly);
-        result = executeSingleRowQuery(
-            QString("SELECT * FROM games WHERE rom_id LIKE '%1%'").arg(bracketCrcOnly));
+    return executeSingleRowQuery(query);
+}
+
+std::map<QString, QVariant> DatabaseManager::getRomInfoByCartridgeCode(const QString& cartridgeCode) {
+    if (cartridgeCode.isEmpty()) {
+        return std::map<QString, QVariant>();
     }
     
-    return result;
+    // Find games with matching cartridge code (exact or partial match)
+    QString query = QString("SELECT * FROM games WHERE cartridge_code = '%1' OR cartridge_code LIKE '%1%' LIMIT 1")
+        .arg(cartridgeCode);
+    
+    return executeSingleRowQuery(query);
+}
+
+std::map<QString, QVariant> DatabaseManager::getRomInfoByInternalName(const QString& internalName) {
+    if (internalName.isEmpty()) {
+        return std::map<QString, QVariant>();
+    }
+    
+    // Find games with matching internal name (exact or cleaned version)
+    QString cleanedName = internalName;
+    cleanedName.remove(QRegExp("[^a-zA-Z0-9]")); // Remove special characters
+    
+    QString query = QString("SELECT * FROM games WHERE internal_name = '%1' OR internal_name = '%2' LIMIT 1")
+        .arg(internalName)
+        .arg(cleanedName);
+    
+    return executeSingleRowQuery(query);
 }
 
 std::map<QString, QVariant> DatabaseManager::getRomCompleteInfo(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
@@ -153,7 +266,12 @@ std::map<QString, QVariant> DatabaseManager::getRomCompleteInfo(uint32_t crc1, u
     auto gameInfo = getRomInfoByCRC(crc1, crc2, countryCode);
     
     if (gameInfo.empty()) {
-        return gameInfo; // ROM not found
+        // Try fallbacks
+        gameInfo = getRomInfoByCRCWithoutCountry(crc1, crc2);
+        
+        if (gameInfo.empty()) {
+            return gameInfo; // ROM not found
+        }
     }
     
     // Get the game ID
@@ -195,6 +313,61 @@ std::map<QString, QVariant> DatabaseManager::getRomCompleteInfo(uint32_t crc1, u
     return gameInfo;
 }
 
+QString DatabaseManager::getGameGoodName(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomInfoByCRC(crc1, crc2, countryCode);
+    return info.count("good_name") ? info["good_name"].toString() : QString();
+}
+
+QString DatabaseManager::getGameInternalName(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomInfoByCRC(crc1, crc2, countryCode);
+    return info.count("internal_name") ? info["internal_name"].toString() : QString();
+}
+
+QString DatabaseManager::getGameCartridgeCode(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomInfoByCRC(crc1, crc2, countryCode);
+    return info.count("cartridge_code") ? info["cartridge_code"].toString() : QString();
+}
+
+QString DatabaseManager::getGameDeveloper(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomCompleteInfo(crc1, crc2, countryCode);
+    return info.count("developer_name") ? info["developer_name"].toString() : QString();
+}
+
+QString DatabaseManager::getGameGenre(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomCompleteInfo(crc1, crc2, countryCode);
+    return info.count("genre_name") ? info["genre_name"].toString() : QString();
+}
+
+QString DatabaseManager::getGameReleaseDate(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomInfoByCRC(crc1, crc2, countryCode);
+    return info.count("release_date") ? info["release_date"].toString() : QString();
+}
+
+int DatabaseManager::getGamePlayers(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomInfoByCRC(crc1, crc2, countryCode);
+    return info.count("players") ? info["players"].toInt() : 1;
+}
+
+bool DatabaseManager::getGameForceFeedback(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomInfoByCRC(crc1, crc2, countryCode);
+    return info.count("force_feedback") ? info["force_feedback"].toBool() : false;
+}
+
+QString DatabaseManager::getGameStatus(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomInfoByCRC(crc1, crc2, countryCode);
+    return info.count("status") ? info["status"].toString() : QString("Unknown");
+}
+
+QString DatabaseManager::getGameRegion(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomCompleteInfo(crc1, crc2, countryCode);
+    return info.count("region_name") ? info["region_name"].toString() : QString();
+}
+
+QString DatabaseManager::getGameCartridgeColor(uint32_t crc1, uint32_t crc2, const QString& countryCode) {
+    auto info = getRomCompleteInfo(crc1, crc2, countryCode);
+    return info.count("cartridge_color_name") ? info["cartridge_color_name"].toString() : QString();
+}
+
 QString DatabaseManager::getRomSetting(int gameId, const QString& settingName, const QString& category) {
     QString query;
     
@@ -211,8 +384,8 @@ QString DatabaseManager::getRomSetting(int gameId, const QString& settingName, c
         return QString(); // Unknown category
     }
     
-    auto result = executeSingleRowQuery(query);
-    return result.empty() ? QString() : result["setting_value"].toString();
+    QVariant result = executeSingleValueQuery(query);
+    return result.isValid() ? result.toString() : QString();
 }
 
 QString DatabaseManager::getCoreSetting(int gameId, const QString& settingName) {
@@ -225,4 +398,42 @@ QString DatabaseManager::getVideoSetting(int gameId, const QString& settingName)
 
 QString DatabaseManager::getAudioSetting(int gameId, const QString& settingName) {
     return getRomSetting(gameId, settingName, "audio");
+}
+
+QString DatabaseManager::getCoreSettingByCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode, const QString& settingName) {
+    int gameId = getGameIdFromCRC(crc1, crc2, countryCode);
+    if (gameId > 0) {
+        return getCoreSetting(gameId, settingName);
+    }
+    return QString();
+}
+
+QString DatabaseManager::getVideoSettingByCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode, const QString& settingName) {
+    int gameId = getGameIdFromCRC(crc1, crc2, countryCode);
+    if (gameId > 0) {
+        return getVideoSetting(gameId, settingName);
+    }
+    return QString();
+}
+
+QString DatabaseManager::getAudioSettingByCRC(uint32_t crc1, uint32_t crc2, const QString& countryCode, const QString& settingName) {
+    int gameId = getGameIdFromCRC(crc1, crc2, countryCode);
+    if (gameId > 0) {
+        return getAudioSetting(gameId, settingName);
+    }
+    return QString();
+}
+
+bool DatabaseManager::isDatabaseLoaded() const {
+    return m_db.isOpen();
+}
+
+QString DatabaseManager::getDatabaseVersion() const {
+    if (!m_db.isOpen()) {
+        return QString();
+    }
+    
+    // Try to get database version from metadata table
+    QVariant version = executeSingleValueQuery("SELECT value FROM metadata WHERE key = 'version' LIMIT 1");
+    return version.isValid() ? version.toString() : QString("Unknown");
 }
