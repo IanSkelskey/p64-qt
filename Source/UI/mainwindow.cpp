@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Set up the basic window properties instead of using UI
     // ui->setupUi(this);
     setWindowTitle("Project64");
-    setWindowIcon(QIcon(":/assets/icons/Resources/icons/pj64.ico"));
+    setWindowIcon(QIcon(":/assets/icons/pj64.ico"));
     resize(800, 600);
     setMinimumSize(640, 480);
     

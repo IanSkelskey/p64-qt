@@ -36,7 +36,7 @@ void ConfigDialog::setupUi()
 {
     // Set window properties
     setWindowTitle(tr("Configuration"));
-    setWindowIcon(QIcon(":/assets/icons/Resources/icons/pj64.ico"));
+    setWindowIcon(QIcon(":/assets/icons/pj64.ico"));
     resize(600, 550);
     
     // Create main layout

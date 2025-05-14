@@ -1,4 +1,5 @@
 #include "RomInfoProvider.h"
+#include "RomParser.h"
 #include <QDir>
 #include <QFileInfo>
 #include <QSettings>
@@ -24,7 +25,8 @@ RomInfoProvider::RomInfoProvider() :
     m_genre(""),
     m_players(1),
     m_forceFeedback(false),
-    m_productID("")
+    m_productID(""),
+    m_romParser(new RomParser())
 {
     if (m_countryNames.isEmpty()) {
         initializeCountryNames();
@@ -33,6 +35,7 @@ RomInfoProvider::RomInfoProvider() :
 
 RomInfoProvider::~RomInfoProvider()
 {
+    delete m_romParser;
 }
 
 void RomInfoProvider::initializeCountryNames()
@@ -86,8 +89,11 @@ bool RomInfoProvider::openRomFile(const QString& filePath)
         return false;
     }
     
+    // Set the header data in the parser
+    m_romParser->setRomData(m_RomHeader);
+    
     // Detect ROM byte format (Z64, N64, V64)
-    m_byteFormat = detectByteFormat(m_RomHeader);
+    m_byteFormat = m_romParser->detectByteFormat();
     qDebug() << "Detected ROM format:" << 
         (m_byteFormat == Format_Z64 ? "Z64 (Big Endian)" : 
          m_byteFormat == Format_N64 ? "N64 (Byte-swapped)" : 
@@ -109,152 +115,18 @@ bool RomInfoProvider::openRomFile(const QString& filePath)
     return true;
 }
 
-RomByteFormat RomInfoProvider::detectByteFormat(const QByteArray& header)
-{
-    // The first 4 bytes of the header should contain a magic value
-    // In Z64 (big-endian format), it's typically 0x80371240
-    // In N64 (byte-swapped format), it would be 0x37804012
-    // In V64 (little-endian format), it would be 0x40123780
-    
-    if (header.size() < 4) {
-        return Format_Unknown;
-    }
-    
-    // Extract the first 4 bytes as unsigned values
-    uint32_t magic = ((static_cast<uint32_t>(static_cast<unsigned char>(header[0])) << 24) |
-                       (static_cast<uint32_t>(static_cast<unsigned char>(header[1])) << 16) |
-                       (static_cast<uint32_t>(static_cast<unsigned char>(header[2])) << 8) |
-                       (static_cast<uint32_t>(static_cast<unsigned char>(header[3]))));
-    
-    // Check against known magic values
-    if (magic == 0x80371240) {
-        return Format_Z64; // Big-endian (native N64)
-    } else if (magic == 0x37804012) {
-        return Format_N64; // Byte-swapped (middle-endian)
-    } else if (magic == 0x40123780) {
-        return Format_V64; // Little-endian
-    }
-    
-    // If no match, try a more lenient check based on the first byte
-    // as sometimes ROMs have slightly different magic numbers but same format
-    unsigned char firstByte = static_cast<unsigned char>(header[0]);
-    if (firstByte == 0x80) {
-        return Format_Z64;
-    } else if (firstByte == 0x37) {
-        return Format_N64;
-    } else if (firstByte == 0x40) {
-        return Format_V64;
-    }
-    
-    // Default to Z64 if we can't determine
-    qWarning() << "Could not determine ROM format, defaulting to Z64. Magic:" << QString::number(magic, 16);
-    return Format_Z64;
-}
-
-QByteArray RomInfoProvider::convertToZ64Format(const QByteArray& data, RomByteFormat sourceFormat)
-{
-    if (sourceFormat == Format_Z64 || sourceFormat == Format_Unknown) {
-        return data; // Already in Z64 format or unknown format
-    }
-    
-    QByteArray converted(data.size(), 0);
-    
-    if (sourceFormat == Format_N64) {
-        // N64 format: bytes are swapped within 16-bit words (middle-endian)
-        for (int i = 0; i < data.size(); i += 2) {
-            if (i + 1 < data.size()) {
-                converted[i] = data[i + 1];
-                converted[i + 1] = data[i];
-            } else if (i < data.size()) {
-                converted[i] = data[i]; // Handle odd byte at the end
-            }
-        }
-    } else if (sourceFormat == Format_V64) {
-        // V64 format: completely reversed byte order (little-endian)
-        for (int i = 0; i < data.size(); i += 4) {
-            if (i + 3 < data.size()) {
-                converted[i] = data[i + 3];
-                converted[i + 1] = data[i + 2];
-                converted[i + 2] = data[i + 1];
-                converted[i + 3] = data[i];
-            } else {
-                // Handle partial word at the end
-                for (int j = 0; j < data.size() - i; j++) {
-                    converted[i + j] = data[data.size() - 1 - j];
-                }
-            }
-        }
-    }
-    
-    return converted;
-}
-
-uint32_t RomInfoProvider::byteSwap32(uint32_t value, RomByteFormat sourceFormat)
-{
-    if (sourceFormat == Format_Z64 || sourceFormat == Format_Unknown) {
-        return value; // No conversion needed
-    } else if (sourceFormat == Format_N64) {
-        // N64 format: swap bytes within 16-bit words
-        return ((value & 0xFF00FF00) >> 8) | ((value & 0x00FF00FF) << 8);
-    } else if (sourceFormat == Format_V64) {
-        // V64 format: completely reverse bytes
-        return ((value >> 24) & 0xFF) | 
-               ((value >> 8) & 0xFF00) | 
-               ((value << 8) & 0xFF0000) | 
-               ((value << 24) & 0xFF000000);
-    }
-    return value;
-}
-
 void RomInfoProvider::parseRomHeader()
 {
-    // Convert header to Z64 format for consistent parsing
-    QByteArray headerZ64 = convertToZ64Format(m_RomHeader, m_byteFormat);
-    
-    // Extract internal name from header (offset 0x20, length 20 bytes)
-    m_internalName = QString::fromUtf8(headerZ64.mid(0x20, 20).constData()).trimmed();
-    
-    // Extract Cartridge ID (offset 0x3C, length 2 bytes)
-    m_cartID = QString::fromUtf8(headerZ64.mid(0x3C, 2).constData()).trimmed();
-    
-    // Extract country code (offset 0x3E, 1 byte)
-    char countryByte = headerZ64.at(0x3E);
-    m_country = charToCountryCode(countryByte);
+    // Use the parser to extract information from the header
+    m_internalName = m_romParser->extractInternalName();
+    m_cartID = m_romParser->extractCartID();
+    m_country = m_romParser->extractCountryCode();
 }
 
 void RomInfoProvider::calculateCRC()
 {
-    // Convert header to Z64 format for consistent CRC calculation
-    QByteArray headerZ64 = convertToZ64Format(m_RomHeader, m_byteFormat);
-    
-    if (headerZ64.size() >= 0x18) {
-        // Extract CRCs from the Z64-formatted header
-        m_crc1 = ((static_cast<uint32_t>(static_cast<unsigned char>(headerZ64[0x10])) << 24) |
-                 (static_cast<uint32_t>(static_cast<unsigned char>(headerZ64[0x11])) << 16) |
-                 (static_cast<uint32_t>(static_cast<unsigned char>(headerZ64[0x12])) << 8) |
-                 (static_cast<uint32_t>(static_cast<unsigned char>(headerZ64[0x13]))));
-        
-        m_crc2 = ((static_cast<uint32_t>(static_cast<unsigned char>(headerZ64[0x14])) << 24) |
-                 (static_cast<uint32_t>(static_cast<unsigned char>(headerZ64[0x15])) << 16) |
-                 (static_cast<uint32_t>(static_cast<unsigned char>(headerZ64[0x16])) << 8) |
-                 (static_cast<uint32_t>(static_cast<unsigned char>(headerZ64[0x17]))));
-        
-        // Debug the actual bytes we're reading
-        qDebug() << "Raw CRC1 bytes:" 
-                 << QString::number(static_cast<unsigned char>(headerZ64[0x10]), 16).toUpper().rightJustified(2, '0')
-                 << QString::number(static_cast<unsigned char>(headerZ64[0x11]), 16).toUpper().rightJustified(2, '0')
-                 << QString::number(static_cast<unsigned char>(headerZ64[0x12]), 16).toUpper().rightJustified(2, '0')
-                 << QString::number(static_cast<unsigned char>(headerZ64[0x13]), 16).toUpper().rightJustified(2, '0');
-                 
-        qDebug() << "Raw CRC2 bytes:" 
-                 << QString::number(static_cast<unsigned char>(headerZ64[0x14]), 16).toUpper().rightJustified(2, '0')
-                 << QString::number(static_cast<unsigned char>(headerZ64[0x15]), 16).toUpper().rightJustified(2, '0')
-                 << QString::number(static_cast<unsigned char>(headerZ64[0x16]), 16).toUpper().rightJustified(2, '0')
-                 << QString::number(static_cast<unsigned char>(headerZ64[0x17]), 16).toUpper().rightJustified(2, '0');
-                 
-        qDebug() << "Calculated CRC1:" << QString::number(m_crc1, 16).toUpper().rightJustified(8, '0')
-                 << "CRC2:" << QString::number(m_crc2, 16).toUpper().rightJustified(8, '0');
-    }
+    // Use the parser to calculate CRCs
+    m_romParser->calculateCRC(m_crc1, m_crc2);
 }
 
 bool RomInfoProvider::loadRomInformation()
@@ -273,14 +145,8 @@ bool RomInfoProvider::loadRomInformation()
 
 void RomInfoProvider::loadRDBInfo()
 {
-    // Convert header to Z64 format for consistent country code extraction
-    QByteArray headerZ64 = convertToZ64Format(m_RomHeader, m_byteFormat);
-    
-    // Get the country code byte (offset 0x3E, 1 byte)
-    unsigned char countryByte = 0;
-    if (headerZ64.size() >= 0x3F) {
-        countryByte = static_cast<unsigned char>(headerZ64[0x3E]);
-    }
+    // Get the country code byte from the parser
+    unsigned char countryByte = m_romParser->getRawCountryByte();
     
     // Format country code consistently with database format (hex value without sign extension)
     QString countryHex = QString::number(countryByte, 16).toUpper().rightJustified(2, '0');
@@ -304,10 +170,10 @@ void RomInfoProvider::loadRDBInfo()
     bool useResources = false;
 
     // Check if resources exist using QFile::exists
-    if (QFile::exists(":/database/Resources/data/Project64.rdb") && 
-        QFile::exists(":/database/Resources/data/Project64.rdx")) {
-        rdbPath = ":/database/Resources/data/Project64.rdb";
-        rdxPath = ":/database/Resources/data/Project64.rdx";
+    if (QFile::exists(":/database/Project64.rdb") && 
+        QFile::exists(":/database/Project64.rdx")) {
+        rdbPath = ":/database/Project64.rdb";
+        rdxPath = ":/database/Project64.rdx";
         useResources = true;
         qDebug() << "Using RDB/RDX from Qt resources";
     } else {
@@ -508,21 +374,7 @@ QString RomInfoProvider::getCartID() const
 
 QString RomInfoProvider::getMediaType() const
 {
-    if (m_RomHeader.size() < 0x3F) {
-        return "Unknown";
-    }
-    
-    char mediaType = m_RomHeader.at(0x3F);
-    switch (mediaType) {
-        case 'C': return "N64 Cartridge (Disk Compatible)";
-        case 'D': return "64DD Disk";
-        case 'E': return "64DD Disk (Expansion)";
-        case 'M': return "N64 Development Cartridge";
-        case 'N': return "N64 Cartridge";
-        case 'Z': return "Aleck64";
-        case 0:   return "None";
-        default:  return QString("Unknown (%1)").arg(QChar(mediaType));
-    }
+    return m_romParser->extractMediaType();
 }
 
 int RomInfoProvider::getRomSize() const

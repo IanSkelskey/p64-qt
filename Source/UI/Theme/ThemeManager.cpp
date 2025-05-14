@@ -113,7 +113,7 @@ void ThemeManager::applyLightTheme()
     app->setPalette(m_lightPalette);
     
     // Apply light style sheets
-    QFile styleFile(":/styles/Resources/styles/light.qss");
+    QFile styleFile(":/styles/light.qss");
     if (styleFile.exists() && styleFile.open(QFile::ReadOnly | QFile::Text)) {
         QString style = QLatin1String(styleFile.readAll());
         app->setStyleSheet(style);
@@ -130,7 +130,7 @@ void ThemeManager::applyDarkTheme()
     app->setPalette(m_darkPalette);
     
     // Apply dark style sheets
-    QFile styleFile(":/styles/Resources/styles/dark.qss");
+    QFile styleFile(":/styles/dark.qss");
     if (styleFile.exists() && styleFile.open(QFile::ReadOnly | QFile::Text)) {
         QString style = QLatin1String(styleFile.readAll());
         app->setStyleSheet(style);
@@ -175,7 +175,7 @@ void ThemeManager::applySystemTheme()
         app->setPalette(m_darkPalette);
         
         // Apply dark style sheets
-        QFile styleFile(":/styles/Resources/styles/dark.qss");
+        QFile styleFile(":/styles/dark.qss");
         if (styleFile.exists() && styleFile.open(QFile::ReadOnly | QFile::Text)) {
             QString style = QLatin1String(styleFile.readAll());
             app->setStyleSheet(style);
@@ -186,7 +186,7 @@ void ThemeManager::applySystemTheme()
         app->setPalette(m_lightPalette);
         
         // Apply light style sheets
-        QFile styleFile(":/styles/Resources/styles/light.qss");
+        QFile styleFile(":/styles/light.qss");
         if (styleFile.exists() && styleFile.open(QFile::ReadOnly | QFile::Text)) {
             QString style = QLatin1String(styleFile.readAll());
             app->setStyleSheet(style);

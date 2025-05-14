@@ -433,7 +433,7 @@ void RomBrowserWidget::createToolbar()
     // Zoom controls with slider
     m_toolbar->addSeparator();
     QLabel* zoomIconLabel = new QLabel(this);
-    zoomIconLabel->setPixmap(QIcon(":/icons/Resources/icons/zoom_out.png").pixmap(16, 16));
+    zoomIconLabel->setPixmap(QIcon(":/icons/zoom_out.png").pixmap(16, 16));
     m_toolbar->addWidget(zoomIconLabel);
     
     m_zoomSlider = new QSlider(Qt::Horizontal, this);
@@ -444,7 +444,7 @@ void RomBrowserWidget::createToolbar()
     m_toolbar->addWidget(m_zoomSlider);
     
     QLabel* zoomIconLabel2 = new QLabel(this);
-    zoomIconLabel2->setPixmap(QIcon(":/icons/Resources/icons/zoom_in.png").pixmap(16, 16));
+    zoomIconLabel2->setPixmap(QIcon(":/icons/zoom_in.png").pixmap(16, 16));
     m_toolbar->addWidget(zoomIconLabel2);
     
     m_zoomLabel = new QLabel("100%", this);
@@ -459,7 +459,7 @@ void RomBrowserWidget::createToolbar()
     // Refresh covers button
     m_refreshCoversAction = m_toolbar->addAction(tr("Refresh Covers"), this, &RomBrowserWidget::onRefreshCoversClicked);
     // Optionally add an icon for the refresh button
-    m_refreshCoversAction->setIcon(QIcon::fromTheme("view-refresh", QIcon(":/icons/Resources/icons/refresh.png")));
+    m_refreshCoversAction->setIcon(QIcon::fromTheme("view-refresh", QIcon(":/icons/refresh.png")));
 }
 
 void RomBrowserWidget::createEmptyState()

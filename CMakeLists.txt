@@ -12,59 +12,63 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Svg OpenGL OpenGLWidgets Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Svg OpenGL OpenGLWidgets Network Sql)
 
 # Define source folders with their respective files
 set(QT_UI_MAIN_SOURCES
-    main.cpp
-    UI/mainwindow.cpp
-    UI/mainwindow.h
-    UIAbstractionLayer.cpp
-    UIAbstractionLayer.h
+    Source/main.cpp
+    Source/UI/mainwindow.cpp
+    Source/UI/mainwindow.h
+    Source/UIAbstractionLayer.cpp
+    Source/UIAbstractionLayer.h
 )
 
 set(QT_UI_ROMBROWSER_SOURCES
-    UI/RomBrowser/RomListModel.h
-    UI/RomBrowser/RomListModel.cpp
-    UI/RomBrowser/RomBrowserWidget.h
-    UI/RomBrowser/RomBrowserWidget.cpp
+    Source/UI/RomBrowser/RomListModel.h
+    Source/UI/RomBrowser/RomListModel.cpp
+    Source/UI/RomBrowser/RomBrowserWidget.h
+    Source/UI/RomBrowser/RomBrowserWidget.cpp
 )
 
 set(QT_UI_CORE_SOURCES
-    Core/RomInfoProvider.h
-    Core/RomInfoProvider.cpp
+    Source/Core/RomInfoProvider.h
+    Source/Core/RomInfoProvider.cpp
+    Source/Core/RomParser.h
+    Source/Core/RomParser.cpp
+    Source/Core/DatabaseManager.h
+    Source/Core/DatabaseManager.cpp
 )
 
 set(QT_UI_EMULATION_SOURCES
-    UI/Emulation/EmulationViewport.h
-    UI/Emulation/EmulationViewport.cpp
+    Source/UI/Emulation/EmulationViewport.h
+    Source/UI/Emulation/EmulationViewport.cpp
 )
 
 set(QT_UI_SETTINGS_SOURCES
-    UI/Settings/SettingsDialog.h
-    UI/Settings/SettingsDialog.cpp
-    UI/Settings/ConfigDialog.h
-    UI/Settings/ConfigDialog.cpp
+    Source/UI/Settings/SettingsDialog.h
+    Source/UI/Settings/SettingsDialog.cpp
+    Source/UI/Settings/ConfigDialog.h
+    Source/UI/Settings/ConfigDialog.cpp
 )
 
 set(QT_UI_ABOUT_SOURCES
-    UI/About/AboutDialog.h
-    UI/About/AboutDialog.cpp
+    Source/UI/About/AboutDialog.h
+    Source/UI/About/AboutDialog.cpp
 )
 
 set(QT_UI_TOOLS_SOURCES
-    UI/Tools/CoverDownloader.h
-    UI/Tools/CoverDownloader.cpp
+    Source/UI/Tools/CoverDownloader.h
+    Source/UI/Tools/CoverDownloader.cpp
 )
 
 set(QT_UI_ENHANCEMENT_SOURCES
-    UI/Enhancement/EnhancementUI.h
-    UI/Enhancement/EnhancementUI.cpp
+    Source/UI/Enhancement/EnhancementUI.h
+    Source/UI/Enhancement/EnhancementUI.cpp
 )
 
 # Include resources - Update the path to the correct location
 set(QT_UI_RESOURCES
-    UI/resources.qrc
+    Source/UI/Resources/resources.qrc
 )
 
 # Remove UI file from the build
@@ -75,8 +79,8 @@ set(UI_FILES
 
 # Add new theme files
 set(THEME_SOURCES
-    UI/Theme/ThemeManager.cpp
-    UI/Theme/ThemeManager.h
+    Source/UI/Theme/ThemeManager.cpp
+    Source/UI/Theme/ThemeManager.h
 )
 
 # Combine all sources
@@ -104,6 +108,7 @@ target_link_libraries(QtUI PRIVATE
     Qt${QT_VERSION_MAJOR}::OpenGL
     Qt${QT_VERSION_MAJOR}::OpenGLWidgets
     Qt${QT_VERSION_MAJOR}::Network
+    Qt${QT_VERSION_MAJOR}::Sql
 )
 
 # Set include directories

@@ -1,0 +1,28 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource prefix="/flags">
+    <file>usa.svg</file>
+    <file>japan.svg</file>
+    <file>europe.svg</file>
+    <file>germany.svg</file>
+    <file>france.svg</file>
+    <file>italy.svg</file>
+    <file>spain.svg</file>
+    <file>australia.svg</file>
+</qresource>
+<qresource prefix="/assets/icons">
+    <file>pj64.ico</file>
+</qresource>
+<qresource prefix="/assets/images">
+    <file>default-label.png</file>
+    <file>logo.png</file>
+    <file>banner.png</file>
+</qresource>
+<qresource prefix="/styles">
+    <file>dark.qss</file>
+    <file>light.qss</file>
+</qresource>
+<qresource prefix="/database">
+    <file>Project64.rdb</file>
+    <file>Project64.rdx</file>
+</qresource>
+</RCC>

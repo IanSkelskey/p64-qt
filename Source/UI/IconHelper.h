@@ -49,27 +49,27 @@ public:
     // Region flag placeholders - will be replaced with actual flag files later
     static QIcon getUSAFlagIcon()
     {
-        return QIcon(":/flags/Resources/flags/usa.svg");
+        return QIcon(":/flags/usa.svg");
     }
 
     static QIcon getEuropeFlagIcon()
     {
-        return QApplication::style()->standardIcon(QStyle::SP_DriveDVDIcon);
+        return QIcon(":/flags/europe.svg");
     }
 
     static QIcon getJapanFlagIcon()
     {
-        return QApplication::style()->standardIcon(QStyle::SP_DriveHDIcon);
+        return QIcon(":/flags/japan.svg");
     }
 
     static QIcon getAustraliaFlagIcon()
     {
-        return QApplication::style()->standardIcon(QStyle::SP_DriveNetIcon);
+        return QIcon(":/flags/australia.svg");
     }
 
     static QIcon getUnknownFlagIcon()
     {
-        return QApplication::style()->standardIcon(QStyle::SP_DriveFDIcon);
+        return QIcon(":/flags/unknown.svg");
     }
 };
 

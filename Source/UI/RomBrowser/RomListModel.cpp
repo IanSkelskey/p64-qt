@@ -35,20 +35,20 @@ RomListModel::RomListModel(QObject* parent)
     // If no settings exist, we'll use defaults after trying to load
     
     // Load country icons from resources
-    m_countryIcons["USA"] = QIcon(":/flags/Resources/flags/usa.svg");
-    m_countryIcons["JP"] = QIcon(":/flags/Resources/flags/japan.svg");
-    m_countryIcons["EU"] = QIcon(":/flags/Resources/flags/europe.svg");
-    m_countryIcons["AU"] = QIcon(":/flags/Resources/flags/australia.svg");
-    m_countryIcons["FR"] = QIcon(":/flags/Resources/flags/france.svg");
-    m_countryIcons["GE"] = QIcon(":/flags/Resources/flags/germany.svg");
-    m_countryIcons["IT"] = QIcon(":/flags/Resources/flags/italy.svg");
-    m_countryIcons["SP"] = QIcon(":/flags/Resources/flags/spain.svg");
-    m_countryIcons["OTHER"] = QIcon(":/flags/Resources/flags/unknown.svg");
-    
-    m_defaultIcon = QIcon(":/icons/Resources/icons/rom_default.png");
+    m_countryIcons["USA"] = QIcon(":/flags/usa.svg");
+    m_countryIcons["JP"] = QIcon(":/flags/japan.svg");
+    m_countryIcons["EU"] = QIcon(":/flags/europe.svg");
+    m_countryIcons["AU"] = QIcon(":/flags/australia.svg");
+    m_countryIcons["FR"] = QIcon(":/flags/france.svg");
+    m_countryIcons["GE"] = QIcon(":/flags/germany.svg");
+    m_countryIcons["IT"] = QIcon(":/flags/italy.svg");
+    m_countryIcons["SP"] = QIcon(":/flags/spain.svg");
+    m_countryIcons["OTHER"] = QIcon(":/flags/unknown.svg");
+
+    m_defaultIcon = QIcon(":/icons/rom_default.png");
     
     // Load default cover image - fix the resource path
-    m_defaultCoverImage = QPixmap(":/assets/images/Resources/images/default-label.png");
+    m_defaultCoverImage = QPixmap(":/assets/images/default-label.png");
     if (m_defaultCoverImage.isNull()) {
         qDebug() << "Failed to load default cover image!";
         // Fallback if resource isn't found
@@ -930,23 +930,23 @@ QIcon RomGridDelegate::getCountryIcon(const QString& countryCode) const
 {
     // Map parenthetical country codes to flag icons
     if (countryCode.contains("U") || countryCode.contains("USA"))
-        return QIcon(":/flags/Resources/flags/usa.svg");
+        return QIcon(":/flags/usa.svg");
     else if (countryCode.contains("E") || countryCode.contains("Europe"))
-        return QIcon(":/flags/Resources/flags/europe.svg");
+        return QIcon(":/flags/europe.svg");
     else if (countryCode.contains("J") || countryCode.contains("Japan"))
-        return QIcon(":/flags/Resources/flags/japan.svg");
+        return QIcon(":/flags/japan.svg");
     else if (countryCode.contains("G") || countryCode.contains("Germany"))
-        return QIcon(":/flags/Resources/flags/germany.svg");
+        return QIcon(":/flags/germany.svg");
     else if (countryCode.contains("F") || countryCode.contains("France"))
-        return QIcon(":/flags/Resources/flags/france.svg");
+        return QIcon(":/flags/france.svg");
     else if (countryCode.contains("I") || countryCode.contains("Italy"))
-        return QIcon(":/flags/Resources/flags/italy.svg");
+        return QIcon(":/flags/italy.svg");
     else if (countryCode.contains("S") || countryCode.contains("Spain"))
-        return QIcon(":/flags/Resources/flags/spain.svg");
+        return QIcon(":/flags/spain.svg");
     else if (countryCode.contains("A") || countryCode.contains("Australia"))
-        return QIcon(":/flags/Resources/flags/australia.svg");
+        return QIcon(":/flags/australia.svg");
     else
-        return QIcon(":/flags/Resources/flags/unknown.svg");
+        return QIcon(":/flags/unknown.svg");
 }
 
 void RomGridDelegate::paint(QPainter* painter, const QStyleOptionViewItem& option, 

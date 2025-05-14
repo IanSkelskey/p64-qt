@@ -3,50 +3,9 @@
 #include <QString>
 #include <QByteArray>
 #include <QMap>
+#include "RomParser.h" // Include parser to get enum types
 
 namespace QT_UI {
-
-enum CountryCode {
-    Country_Unknown = 0,
-    Country_USA,
-    Country_Germany,
-    Country_Japan,
-    Country_Europe,
-    Country_Italy,
-    Country_Spain,
-    Country_Australia,
-    Country_France,
-    Country_Unknown2,
-    Country_Unknown3
-};
-
-enum CICChip {
-    CIC_UNKNOWN = -1,
-    CIC_NUS_6101 = 1,
-    CIC_NUS_6102,
-    CIC_NUS_6103,
-    CIC_NUS_6104,
-    CIC_NUS_6105,
-    CIC_NUS_6106,
-    CIC_NUS_5167,
-    CIC_NUS_8303,
-    CIC_NUS_8401,
-    CIC_NUS_5101
-};
-
-enum RomFileFormat {
-    Format_Uncompressed,
-    Format_Zip,
-    Format_7zip
-};
-
-// Add a ROM byte order format enum
-enum RomByteFormat {
-    Format_Unknown,
-    Format_Z64,    // Big Endian (native N64)
-    Format_N64,    // Byte-swapped (middle-endian)
-    Format_V64     // Little Endian
-};
 
 class RomInfoProvider {
 public:
@@ -92,11 +51,6 @@ private:
     bool loadRomInformation();
     void loadRDBInfo();
     
-    // Add methods for byte format detection and conversion
-    RomByteFormat detectByteFormat(const QByteArray& header);
-    QByteArray convertToZ64Format(const QByteArray& data, RomByteFormat sourceFormat);
-    uint32_t byteSwap32(uint32_t value, RomByteFormat sourceFormat);
-    
     // Static helper methods
     static QString countryCodeToName(CountryCode countryCode);
     static CountryCode charToCountryCode(char countryChar);
@@ -126,8 +80,11 @@ private:
     // Static country name mapping
     static QMap<CountryCode, QString> m_countryNames;
 
-    // Add member to store the detected byte format
+    // ROM byte format
     RomByteFormat m_byteFormat;
+    
+    // ROM parser
+    RomParser* m_romParser;
 };
 
 } // namespace QT_UI
