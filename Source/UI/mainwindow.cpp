@@ -139,7 +139,7 @@ void MainWindow::createMenuBar()
     openRomAction->setShortcut(QKeySequence("Ctrl+O"));
     connect(openRomAction, &QAction::triggered, this, &MainWindow::onOpenROM);
     
-    QAction* openComboAction = new QAction(QT_UI::IconHelper::getFolderIcon(), tr("Open Combo"), this);
+    QAction* openComboAction = new QAction(QT_UI::IconHelper::getCombinedFilesIcon(), tr("Open Combo"), this);
     openComboAction->setShortcut(QKeySequence("Ctrl+Shift+O"));
     
     QAction* romInfoAction = new QAction(QT_UI::IconHelper::getRomInfoIcon(), tr("ROM Info..."), this);
@@ -176,7 +176,7 @@ void MainWindow::createMenuBar()
     // Add Language submenu
     QMenu* languageMenu = fileMenu->addMenu(tr("Language"));
     languageMenu->setIcon(QT_UI::IconHelper::getGlobalIcon());
-    QAction* availableLanguagesAction = new QAction(tr("(Available Languages)"), this);
+    QAction* availableLanguagesAction = new QAction(QT_UI::IconHelper::getGlobalIcon(), tr("(Available Languages)"), this);
     languageMenu->addAction(availableLanguagesAction);
     
     fileMenu->addSeparator();
@@ -186,14 +186,14 @@ void MainWindow::createMenuBar()
     
     // Add Recent ROM submenu
     QMenu* recentRomMenu = fileMenu->addMenu(tr("Recent ROM"));
-    recentRomMenu->setIcon(QT_UI::IconHelper::getRecentIcon());
-    QAction* recentRomsAction = new QAction(tr("(Recent ROMs)"), this);
+    recentRomMenu->setIcon(QT_UI::IconHelper::getCartridgeIcon());
+    QAction* recentRomsAction = new QAction(QT_UI::IconHelper::getCartridgeIcon(), tr("(Recent ROMs)"), this);
     recentRomMenu->addAction(recentRomsAction);
     
     // Add Recent ROM Directories submenu
     QMenu* recentRomDirsMenu = fileMenu->addMenu(tr("Recent ROM Directories"));
     recentRomDirsMenu->setIcon(QT_UI::IconHelper::getFolderIcon());
-    QAction* recentRomDirsAction = new QAction(tr("(Recent ROM Directories)"), this);
+    QAction* recentRomDirsAction = new QAction(QT_UI::IconHelper::getFolderIcon(), tr("(Recent ROM Directories)"), this);
     recentRomDirsMenu->addAction(recentRomDirsAction);
     
     fileMenu->addSeparator();
