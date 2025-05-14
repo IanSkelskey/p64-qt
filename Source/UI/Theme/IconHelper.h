@@ -13,19 +13,19 @@ class IconHelper
 public:
     // File menu icons
     static QIcon getOpenIcon() { return getThemedIcon("folder-open-line"); }
-    static QIcon getCartridgeIcon() { return getThemedIcon("cartridge-line"); } // Add cartridge icon getter
+    static QIcon getCartridgeIcon() { return getThemedIcon("cartridge-line"); }
     static QIcon getRomInfoIcon() { return getThemedIcon("file-search-line"); }
     static QIcon getPlayIcon() { return getThemedIcon("play-line"); }
     static QIcon getStopIcon() { return getThemedIcon("shut-down-line"); }
     static QIcon getPauseIcon() { return getThemedIcon("pause-line"); }
     static QIcon getRefreshIcon() { return getThemedIcon("refresh-line"); }
     static QIcon getExitIcon() { return getThemedIcon("door-open-line"); }
-    static QIcon getFolderIcon() { return getThemedIcon("folder-open-line"); } // Added missing folder icon
+    static QIcon getFolderIcon() { return getThemedIcon("folder-open-line"); }
     static QIcon getFolderSettingsIcon() { return getThemedIcon("folder-settings-line"); }
-    static QIcon getRecentIcon() { return getThemedIcon("cartridge-line"); } // Change from time-line to cartridge-line
+    static QIcon getRecentIcon() { return getThemedIcon("cartridge-line"); }
     static QIcon getGlobalIcon() { return getThemedIcon("global-line"); }
-    static QIcon getCombinedFilesIcon() { return getThemedIcon("checkbox-multiple-blank-line"); } // Added for Open Combo
-    static QIcon getBookIcon() { return getThemedIcon("book"); } // Added for About dialog
+    static QIcon getCombinedFilesIcon() { return getThemedIcon("checkbox-multiple-blank-line"); }
+    static QIcon getBookIcon() { return getThemedIcon("book"); }
     
     // Options menu icons
     static QIcon getFullscreenIcon() { return getThemedIcon("fullscreen-line"); }
@@ -58,7 +58,7 @@ public:
     static QIcon getSupportIcon() { return getThemedIcon("heart-circle-line"); }
     static QIcon getDiscordIcon() { return getThemedIcon("discord"); }
     static QIcon getWebsiteIcon() { return getThemedIcon("global-line"); }
-    static QIcon getAboutIcon() { return getThemedIcon("book"); } // Changed to use book icon that exists
+    static QIcon getAboutIcon() { return getThemedIcon("book"); }
     
     // File type icons
     static QIcon getRomDefaultIcon() { return getThemedIcon("file-line"); }
