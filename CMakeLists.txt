@@ -45,8 +45,6 @@ set(QT_UI_EMULATION_SOURCES
 )
 
 set(QT_UI_SETTINGS_SOURCES
-    Source/UI/Settings/SettingsDialog.h
-    Source/UI/Settings/SettingsDialog.cpp
     Source/UI/Settings/ConfigDialog.h
     Source/UI/Settings/ConfigDialog.cpp
 )
