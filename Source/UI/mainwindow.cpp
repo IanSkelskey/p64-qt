@@ -754,8 +754,24 @@ void MainWindow::onCoverDownloader()
     qDebug() << "Opening Cover Downloader dialog";
     if (!m_coverDownloader) {
         m_coverDownloader = new QT_UI::CoverDownloader(this);
+        
+        // Connect the coversDownloaded signal to refresh the ROM browser
+        connect(m_coverDownloader, &QT_UI::CoverDownloader::coversDownloaded,
+                this, &MainWindow::onCoversDownloaded);
     }
     showDialog(m_coverDownloader);
+}
+
+// Handle downloaded covers by refreshing the ROM browser
+void MainWindow::onCoversDownloaded(int successCount)
+{
+    if (successCount > 0 && romBrowserWidget) {
+        // Refresh the ROM browser to show the new covers
+        romBrowserWidget->refreshCovers();
+        
+        // Show a status message
+        statusBar()->showMessage(tr("%1 new cover(s) downloaded successfully").arg(successCount), 3000);
+    }
 }
 
 // Help menu slots

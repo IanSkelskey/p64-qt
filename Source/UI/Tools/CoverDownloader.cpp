@@ -378,6 +378,10 @@ void CoverDownloader::downloadNext()
         updateStatus(tr("Download complete. Success: %1, Failed: %2").arg(m_successCount).arg(m_failCount));
         m_isDownloading = false;
         m_startButton->setText(tr("Start"));
+        
+        // Emit signal that covers were downloaded
+        emit coversDownloaded(m_successCount);
+        
         return;
     }
     

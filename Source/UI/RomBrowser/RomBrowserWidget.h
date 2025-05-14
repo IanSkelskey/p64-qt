@@ -76,6 +76,8 @@ public:
      */
     void reloadColumnSettings();
     
+    void refreshCovers(); // Add this new method declaration
+    
 signals:
     /**
      * @brief Emitted when a ROM is selected

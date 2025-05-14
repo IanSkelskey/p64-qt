@@ -249,24 +249,24 @@ void RomBrowserWidget::onCoverDirectoryClicked()
     }
 }
 
-void RomBrowserWidget::onRefreshCoversClicked()
+void RomBrowserWidget::refreshCovers()
 {
     if (m_romListModel) {
-        // Update status to show we're refreshing covers
-        m_statusLabel->setText(tr("Refreshing cover art..."));
-        
-        // Refresh covers in the model
+        // Refresh the covers in the model
         m_romListModel->refreshCovers();
         
-        // Update status when complete
-        m_statusLabel->setText(tr("Cover art refreshed"));
-        
-        // Setup grid view again to ensure proper sizing
-        if (m_romListModel->viewMode() == RomListModel::GridView) {
-            setupGridView();
+        // Make sure the views are updated
+        if (viewMode() == RomListModel::GridView) {
             m_gridView->viewport()->update();
+        } else {
+            m_detailView->viewport()->update();
         }
     }
+}
+
+void RomBrowserWidget::onRefreshCoversClicked()
+{
+    refreshCovers();
 }
 
 void RomBrowserWidget::updateToolbar()

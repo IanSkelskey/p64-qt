@@ -69,6 +69,9 @@ private slots:
     // ROM browser slots
     void onRomSelected(const QString& romPath);
     
+    // Cover downloader slots
+    void onCoversDownloaded(int successCount);
+
     // Helper slots for menu bar visibility
     void ensureMenuBarVisible();
     

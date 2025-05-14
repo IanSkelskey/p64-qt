@@ -29,6 +29,9 @@ public:
     explicit CoverDownloader(QWidget *parent = nullptr);
     ~CoverDownloader();
 
+signals:
+    void coversDownloaded(int successCount); // New signal for when covers are downloaded
+
 private slots:
     void startDownload();
     void downloadFinished(QNetworkReply *reply);
