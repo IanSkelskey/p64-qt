@@ -381,7 +381,7 @@ void ConfigDialog::populateColumnLists()
         {static_cast<int>(RomListModel::MD5), tr("MD5")},
         {static_cast<int>(RomListModel::FilePath), tr("File Path")},
         {static_cast<int>(RomListModel::CartID), tr("Cart ID")},
-        {static_cast<int>(RomListModel::MediaType), tr("Media Type")},
+        {static_cast<int>(RomListModel::MediaType), tr("Media")}, // Changed from "Media Type" to "Media"
         {static_cast<int>(RomListModel::ProductID), tr("Product ID")},
         {static_cast<int>(RomListModel::ForceFeedback), tr("Force Feedback")},
         {static_cast<int>(RomListModel::CICChip), tr("CIC Chip")},

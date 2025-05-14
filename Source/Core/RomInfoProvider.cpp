@@ -391,7 +391,9 @@ QString RomInfoProvider::getCartID() const
 
 QString RomInfoProvider::getMediaType() const
 {
-    return m_romParser->extractMediaType();
+    QString mediaType = m_romParser->extractMediaType();
+    qDebug() << "Extracted media type:" << mediaType;
+    return mediaType;
 }
 
 int RomInfoProvider::getRomSize() const

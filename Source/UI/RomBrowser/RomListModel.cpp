@@ -493,7 +493,10 @@ bool RomListModel::loadRomInfo(const QString& filePath, RomInfo& info)
     info.crc1 = QString("0x%1").arg(provider.getCRC1(), 8, 16, QChar('0')).toUpper();
     info.crc2 = QString("0x%1").arg(provider.getCRC2(), 8, 16, QChar('0')).toUpper();
     info.cartID = provider.getCartID();
+    
+    // Get and debug the media type to identify issues
     info.mediaType = provider.getMediaType();
+    qDebug() << "ROM:" << info.fileName << "Media Type:" << info.mediaType;
     
     // New: Set CIC chip information - Fix the type reference
     QT_UI::CICChip cicChip = provider.getCICChip();

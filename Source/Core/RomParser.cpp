@@ -154,20 +154,48 @@ CountryCode RomParser::extractCountryCode() const
 
 QString RomParser::extractMediaType() const
 {
-    if (m_headerZ64.size() < 0x3F) {
+    if (m_headerZ64.size() < 0x39) {
         return "Unknown";
     }
     
-    char mediaType = m_headerZ64.at(0x3F);
+    // Debug the header bytes around the media type area
+    qDebug() << "Media type extraction - Header bytes at 0x38-0x3B:";
+    for (int i = 0; i < 4 && i + 0x38 < m_headerZ64.size(); i++) {
+        qDebug() << QString("Byte 0x%1: 0x%2 (%3)")
+                   .arg(0x38 + i, 2, 16, QChar('0'))
+                   .arg((unsigned char)m_headerZ64.at(0x38 + i), 2, 16, QChar('0'))
+                   .arg(QChar(m_headerZ64.at(0x38 + i)));
+    }
+    
+    // According to documentation, the first byte at 0x38 defines the media type
+    // The second byte at 0x39 is the first letter of a 2-letter game ID
+    
+    unsigned char mediaType = (unsigned char)m_headerZ64.at(0x38);
+    qDebug() << "Raw media type byte:" << mediaType << "Char:" << QChar(mediaType);
+    
+    // If the media type byte is 0, try to determine it from other header info
+    // Most ROMs should be cartridges (Type 'N')
+    if (mediaType == 0) {
+        // Most common case is standard N64 cartridge
+        return "N64 Cartridge";
+    }
+    
+    // Handle valid media types
     switch (mediaType) {
-        case 'C': return "N64 Cartridge (Disk Compatible)";
-        case 'D': return "64DD Disk";
-        case 'E': return "64DD Disk (Expansion)";
-        case 'M': return "N64 Development Cartridge";
         case 'N': return "N64 Cartridge";
-        case 'Z': return "Aleck64";
-        case 0:   return "None";
-        default:  return QString("Unknown (%1)").arg(QChar(mediaType));
+        case 'D': return "64DD Disk";
+        case 'C': return "N64 Cartridge (Disk Compatible)";
+        case 'E': return "64DD Expansion";
+        case 'Z': return "Aleck64 Cartridge";
+        case 0:   return "N64 Cartridge"; // Default to cartridge instead of "None"
+        default:  {
+            // Handle potentially invalid values that are still printable ASCII
+            if (mediaType >= 32 && mediaType <= 126) {
+                return QString("Unknown (%1)").arg(QChar(mediaType));
+            } else {
+                return "N64 Cartridge"; // Default for non-printable values
+            }
+        }
     }
 }
 
