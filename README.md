@@ -2,54 +2,93 @@
 
 A modern Qt-based reimplementation of Project64, the popular Nintendo 64 emulator.
 
-## Project Status: Early Development
+## Project Status: Active Development
 
-This project is currently in the **prototype/early development** stage. It is **not a working emulator yet**, but rather a foundational UI framework that will eventually connect to the Project64 emulation core.
+This project is making steady progress in **active development**. While it's not a fully functional emulator yet, the UI framework is now significantly developed with several core features implemented.
 
 ![GIF Demo](Screenshots/demo.gif)
 
-## Currently Implemented Features
+## Current Features
 
 - **Enhanced ROM Browser**
-  - Detailed list view with sortable columns
-  - New grid view with cover art support
-  - Quick filtering/searching
-  - Customizable ROM information display
+  - Detailed list view with customizable, sortable columns
+  - Grid view with cover art support
+  - Quick filtering and searching capabilities
+  - Configurable ROM information display
+  - Toggle between detail and grid views
   
-- **ROM Information Parsing**
-  - Header data extraction (internal name, country code, CRC values, etc.)
-  - Integration with Project64 ROM databases (RDB/RDX)
-  - Support for additional metadata (developers, release dates, genres)
+- **Comprehensive ROM Information System**
+  - Robust header data extraction (internal name, country code, CRC values, etc.)
+  - Integration with SQLite database for extended ROM information
+  - Support for metadata including developers, release dates, genres, and more
+  - CIC chip detection and cartridge code identification
   
 - **UI Framework**
-  - Abstraction layer for interfacing with the emulation core (WIP)
-  - Modern Qt-based interface with better scaling and theming support
+  - Functional abstraction layer for interfacing with the emulation core
+  - Modern, responsive UI with proper scaling and DPI awareness
+  - Complete theme support with light and dark modes
+  - System theme detection and preference following
+  
+- **Cover Art System**
+  - Integrated cover downloader with progress tracking
+  - Multiple source URL templates support
+  - Database-assisted matching of ROM files to cover art
+  - Customizable cover display options
+  
+- **Settings Management**
+  - Centralized settings system using Qt's built-in mechanisms
+  - User-friendly configuration dialog
+  - Persistent preferences across sessions
+  - ROM-specific configuration support
+
+- **Enhancement Support**
+  - UI for managing enhancement codes
+  - GameShark code integration
+  - Overclock settings management
+  - Plugin-specific enhancements
+
+## Recently Completed
+
+- [x] Implemented complete theme engine with light/dark modes
+- [x] Developed UI abstraction layer with essential emulation controls
+- [x] Created integrated cover art downloader tool
+- [x] Added enhancement management interface
+- [x] Implemented database integration for ROM information
+- [x] Developed configuration dialog with persistent settings
 
 ## Roadmap
 
-- [ ] Complete UI abstraction layer
-- [ ] Integrate with Project64 emulation core
-- [ ] Port over settings and configuration management
-- [ ] Implement save state and memory management features
+- [ ] Complete integration with Project64 emulation core
+- [ ] Implement save state management
 - [ ] Add controller configuration interface
 - [ ] Develop plugin management system
 - [ ] Create macOS and Linux compatible builds
+- [ ] Add debugger interface
+- [ ] Implement enhanced audio controls and visualization
 
 ## Project Goals
 
 1. Create a more modern, user-friendly interface for Project64
 2. Maintain compatibility with existing Project64 plugins and ROM databases
 3. Improve cross-platform support
-4. Add features missing from the original Project64 (like the grid view with cover art)
+4. Add features missing from the original Project64
 5. Gradually port over and improve the emulation core functionality
 
 ## Cover Art Support
 
 This project includes support for displaying cover art in the ROM browser's grid view. Cover art is sourced from the [N64-Covers Repository](https://github.com/IanSkelskey/n64-covers), a dedicated collection of Nintendo 64 game covers specifically designed for use with this project.
 
+### Built-in Cover Downloader
+
+The application now features an integrated cover downloader that can:
+- Scan your ROM directory and identify missing covers
+- Support multiple download sources with customizable URL templates
+- Match covers using cartridge codes from the ROM database
+- Display download progress and success statistics
+
 ### Cover Naming Convention
 
-For proper detection by Project64-Qt, all cover images must follow the N64 cartridge ID naming convention:
+For proper detection by Project64-Qt, cover images must follow the N64 cartridge ID naming convention:
 - Files should be named using the complete cartridge code (e.g., `NUS-NSME-USA.png` for Super Mario 64)
 - PNG format with transparency is preferred
 
@@ -59,19 +98,13 @@ If you'd like to help expand the cover art collection, please visit the [N64-Cov
 
 ## Building the Project
 
-*Build instructions will be added as the project matures.*
+The project uses CMake for build management and requires Qt 6.
 
-## Project Goals
-
-1. Create a more modern, user-friendly interface for Project64
-2. Maintain compatibility with existing Project64 plugins and ROM databases
-3. Improve cross-platform support
-4. Add features missing from the original Project64 (like the grid view with cover art)
-5. Gradually port over and improve the emulation core functionality
+*Detailed build instructions will be added as the project matures.*
 
 ## Contributing
 
-As this project is in early development, contribution guidelines will be established as development progresses. Feel free to open issues for feature suggestions or bug reports.
+As this project is in active development, contributions are welcome. Feel free to open issues for feature suggestions or bug reports.
 
 ## License
 
@@ -82,6 +115,7 @@ As this project is in early development, contribution guidelines will be establi
 - The original Project64 development team
 - Contributors to the Qt framework
 - N64 ROM database maintainers
+- All contributors of cover art and ROM information
 
 ---
 
