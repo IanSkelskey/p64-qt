@@ -7,6 +7,7 @@
 #include "Emulation/EmulationViewport.h"
 #include "RomBrowser/RomBrowserWidget.h"
 #include "Settings/ConfigDialog.h"
+#include "Settings/GraphicsSettingsDialog.h"
 #include "About/AboutDialog.h"
 #include "Tools/CoverDownloader.h"
 #include "Theme/ThemeManager.h"
@@ -40,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_aboutDialog(nullptr)
     , m_configDialog(nullptr)
     , m_coverDownloader(nullptr)
+    , m_graphicsSettingsDialog(nullptr) // Initialize to nullptr
 {
     // Set up the basic window properties instead of using UI
     // ui->setupUi(this);
@@ -214,7 +216,8 @@ void MainWindow::createMenuBar()
     connect(alwaysOnTopAction, &QAction::triggered, this, &MainWindow::onToggleAlwaysOnTop);
     
     QAction* graphicsSettingsAction = new QAction(QT_UI::IconHelper::getGraphicsIcon(), tr("Graphics Settings"), this);
-    graphicsSettingsAction->setEnabled(false);
+    // Change this line from false to true to enable the menu option
+    graphicsSettingsAction->setEnabled(true);
     connect(graphicsSettingsAction, &QAction::triggered, this, &MainWindow::onGraphicsSettings);
     
     QAction* audioSettingsAction = new QAction(QT_UI::IconHelper::getAudioIcon(), tr("Audio Settings"), this);
@@ -413,6 +416,11 @@ MainWindow::~MainWindow()
         delete m_coverDownloader;
         m_coverDownloader = nullptr;
     }
+    
+    if (m_graphicsSettingsDialog) {
+        delete m_graphicsSettingsDialog;
+        m_graphicsSettingsDialog = nullptr;
+    }
 }
 
 void MainWindow::initialize()
@@ -554,6 +562,11 @@ void MainWindow::updateUIState(bool romLoaded)
                  action->text() == "End Emulation") {
             action->setEnabled(romLoaded);
         }
+        // Make sure Graphics Settings stays enabled regardless of ROM state
+        else if (action->objectName() == "actionGraphics_Settings" || 
+                 action->text() == "Graphics Settings") {
+            action->setEnabled(true);
+        }
         // Add more action state updates as needed
     }
     
@@ -654,7 +667,10 @@ void MainWindow::onToggleAlwaysOnTop()
 
 void MainWindow::onGraphicsSettings()
 {
-    // Show graphics settings dialog
+    // Create a temporary dialog instance instead of caching it
+    // This avoids potential issues with initialization and cleanup
+    QT_UI::GraphicsSettingsDialog graphicsDialog(this);
+    graphicsDialog.exec();
 }
 
 void MainWindow::onAudioSettings()

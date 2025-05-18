@@ -74,6 +74,8 @@ set(QT_UI_SETTINGS_SOURCES
     Source/UI/Settings/GeneralSettingsPage.cpp
     Source/UI/Settings/RomBrowserSettingsPage.h
     Source/UI/Settings/RomBrowserSettingsPage.cpp
+    Source/UI/Settings/GraphicsSettingsDialog.h
+    Source/UI/Settings/GraphicsSettingsDialog.cpp
 )
 
 set(QT_UI_ABOUT_SOURCES

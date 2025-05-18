@@ -15,6 +15,7 @@ namespace QT_UI {
     class AboutDialog;
     class ConfigDialog;
     class CoverDownloader;
+    class GraphicsSettingsDialog;  // Add this forward declaration
 }
 
 class MainWindow : public QMainWindow
@@ -117,6 +118,7 @@ private:
     QT_UI::AboutDialog* m_aboutDialog;
     QT_UI::ConfigDialog* m_configDialog;
     QT_UI::CoverDownloader* m_coverDownloader;
+    QT_UI::GraphicsSettingsDialog* m_graphicsSettingsDialog; // Add this member
 
     // Config dialog management
     void createConfigDialog();
