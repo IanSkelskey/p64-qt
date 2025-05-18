@@ -1,5 +1,9 @@
 #include "ConfigDialog.h"
-#include "../../Core/SettingsManager.h"
+#include "../../Core/Settings/SettingsManager.h"
+#include "../../Core/Settings/ApplicationSettings.h"
+#include "../../Core/Settings/PluginSettings.h"
+#include "../../Core/Settings/SaveSettings.h"
+#include "../../Core/Settings/RomBrowserSettings.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>
@@ -257,44 +261,32 @@ void ConfigDialog::loadSettings()
     auto& settings = QT_UI::SettingsManager::instance();
     
     // Load general settings
-    m_pauseWhenInactiveCheck->setChecked(settings.pauseWhenInactive());
-    m_enterFullscreenCheck->setChecked(settings.enterFullscreenWhenLoadingRom());
-    m_disableScreensaverCheck->setChecked(settings.disableScreensaver());
-    m_enableDiscordCheck->setChecked(settings.enableDiscord());
-    m_hideAdvancedSettingsCheck->setChecked(settings.hideAdvancedSettings());
-    m_maxRomsSpinBox->setValue(settings.maxRecentRoms());
-    m_maxRomDirsSpinBox->setValue(settings.maxRecentRomDirs());
+    m_pauseWhenInactiveCheck->setChecked(settings.application()->pauseWhenInactive());
+    m_enterFullscreenCheck->setChecked(settings.application()->enterFullscreenWhenLoadingRom());
+    m_disableScreensaverCheck->setChecked(settings.application()->disableScreensaver());
+    m_enableDiscordCheck->setChecked(settings.application()->enableDiscord());
+    m_hideAdvancedSettingsCheck->setChecked(settings.application()->hideAdvancedSettings());
+    m_maxRomsSpinBox->setValue(settings.application()->maxRecentRoms());
+    m_maxRomDirsSpinBox->setValue(settings.application()->maxRecentRomDirs());
     
     // Load directory settings
-    bool useDefaultPlugin = settings.useDefaultPluginDirectory();
+    bool useDefaultPlugin = settings.plugins()->useDefaultPluginDirectory();
     m_useDefaultPluginDirCheck->setChecked(useDefaultPlugin);
-    m_pluginDirEdit->setText(settings.pluginDirectory());
+    m_pluginDirEdit->setText(settings.plugins()->pluginDirectory());
     m_pluginDirEdit->setEnabled(!useDefaultPlugin);
     
-    bool useDefaultSaves = settings.useDefaultSavesDirectory();
+    bool useDefaultSaves = settings.saves()->useDefaultSavesDirectory();
     m_useDefaultSavesDirCheck->setChecked(useDefaultSaves);
-    m_savesDirEdit->setText(settings.savesDirectory());
+    m_savesDirEdit->setText(settings.saves()->getSavesDirectory());
     m_savesDirEdit->setEnabled(!useDefaultSaves);
+
+    // Apply the same pattern for other settings that have already been migrated
+    m_useRomBrowserCheck->setChecked(settings.romBrowser()->isEnabled());
+    m_recursionCheck->setChecked(settings.romBrowser()->recursiveScan());
+    m_showExtensionsCheck->setChecked(settings.romBrowser()->showFileExtensions());
     
-    // Connect checkboxes to enable/disable edit fields
-    connect(m_useDefaultPluginDirCheck, &QCheckBox::toggled, this, [this](bool checked) {
-        m_pluginDirEdit->setEnabled(!checked);
-    });
-    
-    connect(m_useDefaultSavesDirCheck, &QCheckBox::toggled, this, [this](bool checked) {
-        m_savesDirEdit->setEnabled(!checked);
-    });
-    
-    // Load ROM Browser settings
-    m_useRomBrowserCheck->setChecked(settings.romBrowserEnabled());
-    m_recursionCheck->setChecked(settings.recursiveScan());
-    m_showExtensionsCheck->setChecked(settings.showFileExtensions());
-    
-    // Initialize the column lists
-    populateColumnLists();
-    
-    // Update UI state based on ROM browser being enabled/disabled
-    romBrowserEnabledChanged(m_useRomBrowserCheck->isChecked());
+    // Load ROM column settings
+    loadColumnSettings();
 }
 
 void ConfigDialog::saveSettings()
@@ -302,29 +294,28 @@ void ConfigDialog::saveSettings()
     auto& settings = QT_UI::SettingsManager::instance();
     
     // Save general settings
-    settings.setPauseWhenInactive(m_pauseWhenInactiveCheck->isChecked());
-    settings.setEnterFullscreenWhenLoadingRom(m_enterFullscreenCheck->isChecked());
-    settings.setDisableScreensaver(m_disableScreensaverCheck->isChecked());
-    settings.setEnableDiscord(m_enableDiscordCheck->isChecked());
-    settings.setHideAdvancedSettings(m_hideAdvancedSettingsCheck->isChecked());
-    settings.setMaxRecentRoms(m_maxRomsSpinBox->value());
-    settings.setMaxRecentRomDirs(m_maxRomDirsSpinBox->value());
+    settings.application()->setPauseWhenInactive(m_pauseWhenInactiveCheck->isChecked());
+    settings.application()->setEnterFullscreenWhenLoadingRom(m_enterFullscreenCheck->isChecked());
+    settings.application()->setDisableScreensaver(m_disableScreensaverCheck->isChecked());
+    settings.application()->setEnableDiscord(m_enableDiscordCheck->isChecked());
+    settings.application()->setHideAdvancedSettings(m_hideAdvancedSettingsCheck->isChecked());
+    settings.application()->setMaxRecentRoms(m_maxRomsSpinBox->value());
+    settings.application()->setMaxRecentRomDirs(m_maxRomDirsSpinBox->value());
     
     // Save directory settings
-    settings.setUseDefaultPluginDirectory(m_useDefaultPluginDirCheck->isChecked());
-    settings.setPluginDirectory(m_pluginDirEdit->text());
-    settings.setUseDefaultSavesDirectory(m_useDefaultSavesDirCheck->isChecked());
-    settings.setSavesDirectory(m_savesDirEdit->text());
+    settings.plugins()->setUseDefaultPluginDirectory(m_useDefaultPluginDirCheck->isChecked());
+    settings.plugins()->setPluginDirectory(m_pluginDirEdit->text());
+    settings.saves()->setUseDefaultSavesDirectory(m_useDefaultSavesDirCheck->isChecked());
+    settings.saves()->setSavesDirectory(m_savesDirEdit->text());
     
     // Save ROM browser settings
-    settings.setRomBrowserEnabled(m_useRomBrowserCheck->isChecked());
-    settings.setRecursiveScan(m_recursionCheck->isChecked());
-    settings.setShowFileExtensions(m_showExtensionsCheck->isChecked());
+    settings.romBrowser()->setEnabled(m_useRomBrowserCheck->isChecked());
+    settings.romBrowser()->setRecursiveScan(m_recursionCheck->isChecked());
+    settings.romBrowser()->setShowFileExtensions(m_showExtensionsCheck->isChecked());
     
     // Create a list of visible column IDs in order
     QVariantList visibleColumns;
-    QStringList colNames; // For debug logging
-    
+    QStringList colNames;    
     for (int i = 0; i < m_shownColumnsList->count(); i++) {
         QListWidgetItem *item = m_shownColumnsList->item(i);
         int columnId = item->data(Qt::UserRole).toInt();
@@ -337,13 +328,33 @@ void ConfigDialog::saveSettings()
     qDebug() << "Column order:" << colNames.join(", ");
     
     // Set visible columns through the settings manager
-    settings.setVisibleColumns(visibleColumns);
+    settings.romBrowser()->setVisibleColumns(visibleColumns);
     
     qDebug() << "Column settings saved successfully";
     
     // Signal that column settings changed - will trigger reload of columns in views
     qDebug() << "Emitting column settings changed signal";
     emit columnSettingsChanged();
+}
+
+void ConfigDialog::loadColumnSettings()
+{
+    // Clear existing column lists
+    m_availableColumnsList->clear();
+    m_shownColumnsList->clear();
+    
+    // Get column settings from ROM browser settings
+    auto& settings = QT_UI::SettingsManager::instance();
+    QVariantList visibleColumns = settings.romBrowser()->visibleColumns();
+    
+    // Populate lists based on the settings
+    populateColumnLists();
+    
+    // Update control states based on settings
+    updateColumnButtonStates();
+    
+    // Update enabled state of ROM browser controls
+    romBrowserEnabledChanged(m_useRomBrowserCheck->isChecked());
 }
 
 void ConfigDialog::populateColumnLists()

@@ -1,5 +1,6 @@
 #include "ThemeManager.h"
-#include "../../Core/SettingsManager.h"
+#include "../../Core/Settings/SettingsManager.h"
+#include "../../Core/Settings/ApplicationSettings.h"
 #include <QSettings>
 #include <QFile>
 #include <QStyleFactory>
@@ -239,9 +240,9 @@ bool ThemeManager::isSystemInDarkMode() const
 
 void ThemeManager::saveThemeSettings(Theme theme)
 {
-    // Use centralized SettingsManager instead of direct QSettings
-    QT_UI::SettingsManager::instance().setTheme(
-        static_cast<QT_UI::SettingsManager::Theme>(theme));
+    // Update the settings with the current theme
+    QT_UI::SettingsManager::instance().application()->setTheme(
+        static_cast<QT_UI::ApplicationSettings::Theme>(theme));
 }
 
 // New method to update icon theme based on current application theme

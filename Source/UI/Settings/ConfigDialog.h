@@ -46,6 +46,7 @@ private:
     void loadSettings();
     void saveSettings();
     void populateColumnLists();
+    void loadColumnSettings(); // Add this missing function declaration
     
     QTabWidget *m_tabWidget;
     

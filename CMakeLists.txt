@@ -37,8 +37,26 @@ set(QT_UI_CORE_SOURCES
     Source/Core/RomParser.cpp
     Source/Core/DatabaseManager.h
     Source/Core/DatabaseManager.cpp
-    Source/Core/SettingsManager.h
-    Source/Core/SettingsManager.cpp
+    Source/Core/Settings/SettingsManager.h
+    Source/Core/Settings/SettingsManager.cpp
+    Source/Core/Settings/ApplicationSettings.h
+    Source/Core/Settings/ApplicationSettings.cpp
+    Source/Core/Settings/AudioSettings.h
+    Source/Core/Settings/AudioSettings.cpp
+    Source/Core/Settings/DebugSettings.h
+    Source/Core/Settings/DebugSettings.cpp
+    Source/Core/Settings/EmulationSettings.h
+    Source/Core/Settings/EmulationSettings.cpp
+    Source/Core/Settings/GraphicsSettings.h
+    Source/Core/Settings/GraphicsSettings.cpp
+    Source/Core/Settings/InputSettings.h
+    Source/Core/Settings/InputSettings.cpp
+    Source/Core/Settings/PluginSettings.h
+    Source/Core/Settings/PluginSettings.cpp
+    Source/Core/Settings/RomBrowserSettings.h
+    Source/Core/Settings/RomBrowserSettings.cpp
+    Source/Core/Settings/SaveSettings.h
+    Source/Core/Settings/SaveSettings.cpp
 )
 
 set(QT_UI_EMULATION_SOURCES

@@ -1,5 +1,6 @@
 #include "CoverDownloader.h"
-#include "../../Core/SettingsManager.h"
+#include "../../Core/Settings/SettingsManager.h"
+#include "../../Core/Settings/RomBrowserSettings.h"
 #include "../../Core/RomParser.h"
 
 #include <QSettings>
@@ -133,23 +134,23 @@ void CoverDownloader::setupUi()
 void CoverDownloader::saveSettings()
 {
     auto& settings = QT_UI::SettingsManager::instance();
-    settings.setCoverUrlTemplates(m_urlTextEdit->toPlainText());
-    settings.setCoverDownloaderUseTitleNames(m_useTitleNamesCheckBox->isChecked());
-    settings.setCoverDownloaderOverwriteExisting(m_overwriteExistingCheckBox->isChecked());
+    
+    // Save URL templates and options
+    settings.romBrowser()->setCoverUrlTemplates(m_urlTextEdit->toPlainText());
+    settings.romBrowser()->setCoverDownloaderUseTitleNames(m_useTitleNamesCheckBox->isChecked());
+    settings.romBrowser()->setCoverDownloaderOverwriteExisting(m_overwriteExistingCheckBox->isChecked());
 }
 
 void CoverDownloader::loadSettings()
 {
     auto& settings = QT_UI::SettingsManager::instance();
+    m_romDirectory = settings.romBrowser()->lastRomDirectory();
+    m_coverDirectory = settings.romBrowser()->coverDirectory();
     
-    // Get ROM and cover directories from SettingsManager
-    m_romDirectory = settings.lastRomDirectory();
-    m_coverDirectory = settings.coverDirectory();
-    
-    // Load user preferences
-    m_urlTextEdit->setPlainText(settings.coverUrlTemplates());
-    m_useTitleNamesCheckBox->setChecked(settings.coverDownloaderUseTitleNames());
-    m_overwriteExistingCheckBox->setChecked(settings.coverDownloaderOverwriteExisting());
+    // Set up the UI based on settings
+    m_urlTextEdit->setPlainText(settings.romBrowser()->coverUrlTemplates());
+    m_useTitleNamesCheckBox->setChecked(settings.romBrowser()->coverDownloaderUseTitleNames());
+    m_overwriteExistingCheckBox->setChecked(settings.romBrowser()->coverDownloaderOverwriteExisting());
 }
 
 bool CoverDownloader::parseRomHeader(const QString &romPath, QString &cartridgeCode, QString &romName)
@@ -252,7 +253,7 @@ void CoverDownloader::scanRoms()
     QStringList romFiles = romDir.entryList(romExtensions, QDir::Files);
     
     auto& settings = QT_UI::SettingsManager::instance();
-    bool recursive = settings.recursiveScan();
+    bool recursive = settings.romBrowser()->recursiveScan();
     
     // Process files found in the main directory
     for (const QString& romFileName : romFiles) {

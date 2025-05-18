@@ -1,5 +1,6 @@
 #include "MainWindow.h"
-#include "../Core/SettingsManager.h"
+#include "../Core/Settings/SettingsManager.h"
+#include "../Core/Settings/ApplicationSettings.h"
 // Remove UI include
 // #include "ui_mainwindow.h"
 
@@ -519,8 +520,8 @@ void MainWindow::loadSettings()
     auto& settings = QT_UI::SettingsManager::instance();
     
     // Load window geometry
-    restoreGeometry(settings.mainWindowGeometry());
-    restoreState(settings.mainWindowState());
+    restoreGeometry(settings.application()->mainWindowGeometry());
+    restoreState(settings.application()->mainWindowState());
 }
 
 void MainWindow::saveSettings()
@@ -528,8 +529,8 @@ void MainWindow::saveSettings()
     auto& settings = QT_UI::SettingsManager::instance();
     
     // Save window geometry
-    settings.setMainWindowGeometry(saveGeometry());
-    settings.setMainWindowState(saveState());
+    settings.application()->setMainWindowGeometry(saveGeometry());
+    settings.application()->setMainWindowState(saveState());
 }
 
 void MainWindow::updateUIState(bool romLoaded)

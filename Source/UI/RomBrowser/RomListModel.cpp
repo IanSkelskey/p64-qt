@@ -1,5 +1,6 @@
 #include "RomListModel.h"
-#include "../../Core/SettingsManager.h"
+#include "../../Core/Settings/SettingsManager.h"
+#include "../../Core/Settings/RomBrowserSettings.h"
 #include "../Theme/IconHelper.h"  // Add this include for IconHelper
 #include <QDir>
 #include <QFileInfo>
@@ -848,15 +849,15 @@ void RomListModel::setDefaultColumns()
     
     // Access the settings to store default columns
     auto& settings = QT_UI::SettingsManager::instance();
+    QVariantList columns;
     
     // Store the default visible columns in SettingsManager
-    QVariantList columns;
     for (auto column : defaultVisibleColumns) {
         columns.append(static_cast<int>(column));
     }
     
     // Use the SettingsManager API to store the visible columns
-    settings.setVisibleColumns(columns);
+    settings.romBrowser()->setVisibleColumns(columns);
     
     // Update the model with the new columns
     beginResetModel();
@@ -870,29 +871,27 @@ void RomListModel::loadSettings()
 {
     auto& settings = QT_UI::SettingsManager::instance();
     
-    // Load view mode setting
-    int viewMode = settings.viewMode();
+    // Load view mode
+    int viewMode = static_cast<int>(settings.romBrowser()->viewMode());
     m_currentViewMode = static_cast<ViewMode>(viewMode);
     
-    // Load grid view settings
-    m_showTitles = settings.showTitles();
-    m_coverScale = settings.coverScale();
+    // Load other display settings
+    m_showTitles = settings.romBrowser()->showTitles();
+    m_coverScale = settings.romBrowser()->coverScale();
     
-    // Load cover directory
-    m_coverDirectory = settings.coverDirectory();
-                                    
-    // Load column settings
-    QVariantList visibleColumns = settings.visibleColumns();
-    QVector<RomColumns> columns;
+    // Get cover directory
+    m_coverDirectory = settings.romBrowser()->coverDirectory();
     
-    // Only process if we have columns defined
+    // Load the column settings
+    QVariantList visibleColumns = settings.romBrowser()->visibleColumns();
+    
     if (!visibleColumns.isEmpty()) {
         qDebug() << "Loading columns from settings. Count:" << visibleColumns.size();
         
         foreach(QVariant column, visibleColumns) {
             int colValue = column.toInt();
             if (colValue >= 0 && colValue < ColumnCount) {
-                columns.append(static_cast<RomColumns>(colValue));
+                m_visibleColumns.append(static_cast<RomColumns>(colValue));
                 qDebug() << "  Loading column:" << colValue << "(" 
                          << columnNameFromEnum(static_cast<RomColumns>(colValue)) << ")";
             }
@@ -900,9 +899,8 @@ void RomListModel::loadSettings()
     }
     
     // If we successfully loaded columns, use them; otherwise use defaults
-    if (!columns.isEmpty()) {
-        m_visibleColumns = columns;
-        qDebug() << "Applied" << columns.size() << "columns from settings";
+    if (!m_visibleColumns.isEmpty()) {
+        qDebug() << "Applied" << m_visibleColumns.size() << "columns from settings";
     } else {
         qDebug() << "No valid columns defined in settings, using defaults";
         setDefaultColumns();
@@ -913,15 +911,15 @@ void RomListModel::saveSettings()
 {
     auto& settings = QT_UI::SettingsManager::instance();
     
-    // Save view mode
-    settings.setViewMode(static_cast<SettingsManager::ViewMode>(m_currentViewMode));
+    // Save the current view mode
+    settings.romBrowser()->setViewMode(static_cast<QT_UI::RomBrowserSettings::ViewMode>(m_currentViewMode));
     
-    // Save grid view settings
-    settings.setShowTitles(m_showTitles);
-    settings.setCoverScale(m_coverScale);
+    // Save other display settings
+    settings.romBrowser()->setShowTitles(m_showTitles);
+    settings.romBrowser()->setCoverScale(m_coverScale);
     
-    // Save cover directory
-    settings.setCoverDirectory(m_coverDirectory);
+    // Save the cover directory
+    settings.romBrowser()->setCoverDirectory(m_coverDirectory);
 }
 
 QIcon QT_UI::RomListModel::getCountryIcon(const QString &countryCode) const
