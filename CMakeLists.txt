@@ -67,6 +67,13 @@ set(QT_UI_EMULATION_SOURCES
 set(QT_UI_SETTINGS_SOURCES
     Source/UI/Settings/ConfigDialog.h
     Source/UI/Settings/ConfigDialog.cpp
+    Source/UI/Settings/BaseSettingsPage.h
+    Source/UI/Settings/DirectoriesSettingsPage.h
+    Source/UI/Settings/DirectoriesSettingsPage.cpp
+    Source/UI/Settings/GeneralSettingsPage.h
+    Source/UI/Settings/GeneralSettingsPage.cpp
+    Source/UI/Settings/RomBrowserSettingsPage.h
+    Source/UI/Settings/RomBrowserSettingsPage.cpp
 )
 
 set(QT_UI_ABOUT_SOURCES
