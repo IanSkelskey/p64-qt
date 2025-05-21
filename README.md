@@ -1,10 +1,13 @@
-# Project64-Qt
+# N64-Qt
 
-A modern Qt-based reimplementation of Project64, the popular Nintendo 64 emulator.
+A modern, high-accuracy Nintendo 64 emulator with a feature-rich Qt-based interface.
 
-## Project Status: Active Development
+## Project Vision
 
-This project is making steady progress in **active development**. While it's not a fully functional emulator yet, the UI framework is now significantly developed with several core features implemented.
+This project aims to create **the best possible N64 emulator** by combining:
+- The high-accuracy **ares N64 emulation core**
+- A modern, feature-rich **Qt-based interface** inspired by PCSX2
+- Advanced features like **high-resolution texture support**
 
 ![GIF Demo](Screenshots/demo.gif)
 
@@ -12,7 +15,7 @@ This project is making steady progress in **active development**. While it's not
 
 - **Enhanced ROM Browser**
   - Detailed list view with customizable, sortable columns
-  - Grid view with cover art support
+  - Grid view with cover art support (inspired by PCSX2)
   - Quick filtering and searching capabilities
   - Configurable ROM information display
   - Toggle between detail and grid views
@@ -24,7 +27,6 @@ This project is making steady progress in **active development**. While it's not
   - CIC chip detection and cartridge code identification
   
 - **UI Framework**
-  - Functional abstraction layer for interfacing with the emulation core
   - Modern, responsive UI with proper scaling and DPI awareness
   - Complete theme support with light and dark modes
   - System theme detection and preference following
@@ -41,16 +43,9 @@ This project is making steady progress in **active development**. While it's not
   - Persistent preferences across sessions
   - ROM-specific configuration support
 
-- **Enhancement Support**
-  - UI for managing enhancement codes
-  - GameShark code integration
-  - Overclock settings management
-  - Plugin-specific enhancements
-
 ## Recently Completed
 
 - [x] Implemented complete theme engine with light/dark modes
-- [x] Developed UI abstraction layer with essential emulation controls
 - [x] Created integrated cover art downloader tool
 - [x] Added enhancement management interface
 - [x] Implemented database integration for ROM information
@@ -58,21 +53,22 @@ This project is making steady progress in **active development**. While it's not
 
 ## Roadmap
 
-- [ ] Complete integration with Project64 emulation core
+- [ ] Integrate the ares N64 emulation core for high accuracy
 - [ ] Implement save state management
 - [ ] Add controller configuration interface
-- [ ] Develop plugin management system
+- [ ] Implement enhanced audio controls and visualization
 - [ ] Create macOS and Linux compatible builds
 - [ ] Add debugger interface
-- [ ] Implement enhanced audio controls and visualization
+- [ ] Add texture dumping capability
+- [ ] Implement high-resolution texture support (similar to Project64)
 
 ## Project Goals
 
-1. Create a more modern, user-friendly interface for Project64
-2. Maintain compatibility with existing Project64 plugins and ROM databases
-3. Improve cross-platform support
-4. Add features missing from the original Project64
-5. Gradually port over and improve the emulation core functionality
+1. Create the most accurate N64 emulator possible using the ares core
+2. Provide a modern, user-friendly interface inspired by best-in-class emulators like PCSX2
+3. Enable advanced features like high-resolution textures and enhancement options
+4. Support all major platforms (Windows, macOS, Linux)
+5. Build a vibrant community around N64 preservation and enhancement
 
 ## Cover Art Support
 
@@ -80,7 +76,7 @@ This project includes support for displaying cover art in the ROM browser's grid
 
 ### Built-in Cover Downloader
 
-The application now features an integrated cover downloader that can:
+The application features an integrated cover downloader that can:
 - Scan your ROM directory and identify missing covers
 - Support multiple download sources with customizable URL templates
 - Match covers using cartridge codes from the ROM database
@@ -88,7 +84,7 @@ The application now features an integrated cover downloader that can:
 
 ### Cover Naming Convention
 
-For proper detection by Project64-Qt, cover images must follow the N64 cartridge ID naming convention:
+For proper detection, cover images must follow the N64 cartridge ID naming convention:
 - Files should be named using the complete cartridge code (e.g., `NUS-NSME-USA.png` for Super Mario 64)
 - PNG format with transparency is preferred
 
@@ -112,11 +108,8 @@ As this project is in active development, contributions are welcome. Feel free t
 
 ## Acknowledgments
 
-- The original Project64 development team
+- The ares/higan team for their highly accurate emulation cores
+- PCSX2 team for UI design inspiration
 - Contributors to the Qt framework
 - N64 ROM database maintainers
 - All contributors of cover art and ROM information
-
----
-
-*This project is not affiliated with the original Project64 development team.*
