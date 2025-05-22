@@ -2,7 +2,6 @@
 
 #include <QObject>
 #include <QString>
-#include "../../Notification.h"
 
 namespace QT_UI {
 

@@ -1,6 +1,6 @@
 #include "GeneralSettingsPage.h"
-#include "../../Core/Settings/SettingsManager.h"
-#include "../../Core/Settings/ApplicationSettings.h"
+#include <Core/Settings/SettingsManager.h>
+#include <Core/Settings/ApplicationSettings.h>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>

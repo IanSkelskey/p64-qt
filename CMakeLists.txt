@@ -4,7 +4,6 @@ project(QtUI VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-
 # Remove AUTOUIC since we're not using UI files anymore
 # set(CMAKE_AUTOUIC ON)
 
@@ -14,122 +13,31 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Svg OpenGL OpenGLWidgets Network Sql)
 
-# Define source folders with their respective files
-set(QT_UI_MAIN_SOURCES
-    Source/main.cpp
-    Source/UI/mainwindow.cpp
-    Source/UI/mainwindow.h
-    Source/UIAbstractionLayer.cpp
-    Source/UIAbstractionLayer.h
-)
-
-set(QT_UI_ROMBROWSER_SOURCES
-    Source/UI/RomBrowser/RomListModel.h
-    Source/UI/RomBrowser/RomListModel.cpp
-    Source/UI/RomBrowser/RomBrowserWidget.h
-    Source/UI/RomBrowser/RomBrowserWidget.cpp
-)
-
-set(QT_UI_CORE_SOURCES
-    Source/Core/RomInfoProvider.h
-    Source/Core/RomInfoProvider.cpp
-    Source/Core/RomParser.h
-    Source/Core/RomParser.cpp
-    Source/Core/DatabaseManager.h
-    Source/Core/DatabaseManager.cpp
-    Source/Core/Settings/SettingsManager.h
-    Source/Core/Settings/SettingsManager.cpp
-    Source/Core/Settings/ApplicationSettings.h
-    Source/Core/Settings/ApplicationSettings.cpp
-    Source/Core/Settings/AudioSettings.h
-    Source/Core/Settings/AudioSettings.cpp
-    Source/Core/Settings/DebugSettings.h
-    Source/Core/Settings/DebugSettings.cpp
-    Source/Core/Settings/EmulationSettings.h
-    Source/Core/Settings/EmulationSettings.cpp
-    Source/Core/Settings/GraphicsSettings.h
-    Source/Core/Settings/GraphicsSettings.cpp
-    Source/Core/Settings/InputSettings.h
-    Source/Core/Settings/InputSettings.cpp
-    Source/Core/Settings/PluginSettings.h
-    Source/Core/Settings/PluginSettings.cpp
-    Source/Core/Settings/RomBrowserSettings.h
-    Source/Core/Settings/RomBrowserSettings.cpp
-    Source/Core/Settings/SaveSettings.h
-    Source/Core/Settings/SaveSettings.cpp
-)
-
-set(QT_UI_EMULATION_SOURCES
-    Source/UI/Emulation/EmulationViewport.h
-    Source/UI/Emulation/EmulationViewport.cpp
-)
-
-set(QT_UI_SETTINGS_SOURCES
-    Source/UI/Settings/ConfigDialog.h
-    Source/UI/Settings/ConfigDialog.cpp
-    Source/UI/Settings/BaseSettingsPage.h
-    Source/UI/Settings/DirectoriesSettingsPage.h
-    Source/UI/Settings/DirectoriesSettingsPage.cpp
-    Source/UI/Settings/GeneralSettingsPage.h
-    Source/UI/Settings/GeneralSettingsPage.cpp
-    Source/UI/Settings/RomBrowserSettingsPage.h
-    Source/UI/Settings/RomBrowserSettingsPage.cpp
-    Source/UI/Settings/GraphicsSettingsDialog.h
-    Source/UI/Settings/GraphicsSettingsDialog.cpp
-)
-
-set(QT_UI_ABOUT_SOURCES
-    Source/UI/About/AboutDialog.h
-    Source/UI/About/AboutDialog.cpp
-)
-
-set(QT_UI_TOOLS_SOURCES
-    Source/UI/Tools/CoverDownloader.h
-    Source/UI/Tools/CoverDownloader.cpp
-)
-
-set(QT_UI_ENHANCEMENT_SOURCES
-    Source/UI/Enhancement/EnhancementUI.h
-    Source/UI/Enhancement/EnhancementUI.cpp
-)
-
-# Include resources - Update the path to the correct location
+# Include resources
 set(QT_UI_RESOURCES
     Source/UI/Resources/resources.qrc
 )
 
-# Remove UI file from the build
-set(UI_FILES
-    # mainwindow.ui - Remove this line
-    # ...other UI files...
-)
+# Add the component subdirectories
+add_subdirectory(Source/Core)
+add_subdirectory(Source/UI)
 
-# Add new theme files
-set(THEME_SOURCES
-    Source/UI/Theme/ThemeManager.cpp
-    Source/UI/Theme/ThemeManager.h
-)
-
-# Combine all sources
-set(PROJECT_SOURCES
-    ${QT_UI_MAIN_SOURCES}
-    ${QT_UI_ROMBROWSER_SOURCES}
-    ${QT_UI_CORE_SOURCES}
-    ${QT_UI_EMULATION_SOURCES}
-    ${QT_UI_ENHANCEMENT_SOURCES}
-    ${QT_UI_SETTINGS_SOURCES}
-    ${QT_UI_ABOUT_SOURCES}
-    ${QT_UI_TOOLS_SOURCES}
-    ${QT_UI_RESOURCES}
-    ${THEME_SOURCES}
+# Define minimal main source
+set(MAIN_SOURCES
+    Source/main.cpp
+    Source/UIAbstractionLayer.cpp
+    Source/UIAbstractionLayer.h
 )
 
 qt_add_executable(QtUI
     MANUAL_FINALIZATION
-    ${PROJECT_SOURCES}
+    ${MAIN_SOURCES}
+    ${QT_UI_RESOURCES}
 )
 
 target_link_libraries(QtUI PRIVATE 
+    CoreLib
+    UILib
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Svg
     Qt${QT_VERSION_MAJOR}::OpenGL

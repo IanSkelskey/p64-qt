@@ -1,7 +1,7 @@
 #include "RomBrowserWidget.h"
-#include "../../Core/Settings/SettingsManager.h"
-#include "../../Core/Settings/RomBrowserSettings.h"
-#include "../Theme/IconHelper.h"
+#include <Core/Settings/SettingsManager.h>
+#include <Core/Settings/RomBrowserSettings.h>
+#include <UI/Theme/IconHelper.h>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>

@@ -1,7 +1,7 @@
 #include "RomBrowserSettingsPage.h"
-#include "../../Core/Settings/SettingsManager.h"
-#include "../../Core/Settings/RomBrowserSettings.h"
-#include "../RomBrowser/RomListModel.h"
+#include <Core/Settings/SettingsManager.h>
+#include <Core/Settings/RomBrowserSettings.h>
+#include <UI/RomBrowser/RomListModel.h>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>

@@ -1,8 +1,8 @@
 #include "DirectoriesSettingsPage.h"
-#include "../../Core/Settings/SettingsManager.h"
-#include "../../Core/Settings/PluginSettings.h"
-#include "../../Core/Settings/SaveSettings.h"
-#include "../../Core/Settings/RomBrowserSettings.h"
+#include <Core/Settings/SettingsManager.h>
+#include <Core/Settings/PluginSettings.h>
+#include <Core/Settings/SaveSettings.h>
+#include <Core/Settings/RomBrowserSettings.h>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QFormLayout>

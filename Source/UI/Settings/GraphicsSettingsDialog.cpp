@@ -1,6 +1,6 @@
 #include "GraphicsSettingsDialog.h"
-#include "../../Core/Settings/SettingsManager.h"
-#include "../../Core/Settings/GraphicsSettings.h"
+#include <Core/Settings/SettingsManager.h>
+#include <Core/Settings/GraphicsSettings.h>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>

@@ -1,7 +1,8 @@
 #include "RomListModel.h"
-#include "../../Core/Settings/SettingsManager.h"
-#include "../../Core/Settings/RomBrowserSettings.h"
-#include "../Theme/IconHelper.h"  // Add this include for IconHelper
+#include <Core/RomInfoProvider.h>
+#include <Core/Settings/SettingsManager.h>
+#include <Core/Settings/RomBrowserSettings.h>
+#include <UI/Theme/IconHelper.h>  // Add this include for IconHelper
 #include <QDir>
 #include <QFileInfo>
 #include <QDateTime>
@@ -17,7 +18,6 @@
 #include <QFont>
 #include <QStyledItemDelegate>
 #include <QRegularExpression>
-#include "../../Core/RomInfoProvider.h"
 
 namespace QT_UI {
 
