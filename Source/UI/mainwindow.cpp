@@ -1,17 +1,17 @@
 #include "MainWindow.h"
-#include "../Core/Settings/SettingsManager.h"
-#include "../Core/Settings/ApplicationSettings.h"
+#include <Core/Settings/SettingsManager.h>
+#include <Core/Settings/ApplicationSettings.h>
 // Remove UI include
 // #include "ui_mainwindow.h"
 
-#include "Emulation/EmulationViewport.h"
-#include "RomBrowser/RomBrowserWidget.h"
-#include "Settings/ConfigDialog.h"
-#include "Settings/GraphicsSettingsDialog.h"
-#include "About/AboutDialog.h"
-#include "Tools/CoverDownloader.h"
-#include "Theme/ThemeManager.h"
-#include "Theme/IconHelper.h"
+#include <UI/Emulation/EmulationViewport.h>
+#include <UI/RomBrowser/RomBrowserWidget.h>
+#include <UI/Settings/ConfigDialog.h>
+#include <UI/Settings/GraphicsSettingsDialog.h>
+#include <UI/About/AboutDialog.h>
+#include <UI/Tools/CoverDownloader.h>
+#include <UI/Theme/ThemeManager.h>
+#include <UI/Theme/IconHelper.h>
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -893,4 +893,87 @@ void MainWindow::showDialog(QDialog* dialog)
     int result = dialog->exec();
     
     qDebug() << "Dialog closed with result:" << result;
+}
+
+// Notification slot implementations
+void MainWindow::onShowError(const QString& message)
+{
+    QMessageBox::critical(this, tr("Error"), message);
+}
+
+void MainWindow::onShowWarning(const QString& message)
+{
+    QMessageBox::warning(this, tr("Warning"), message);
+}
+
+void MainWindow::onShowMessage(const QString& message, int timeout)
+{
+    statusBar()->showMessage(message, timeout);
+}
+
+void MainWindow::onShowFatalError(const QString& message)
+{
+    QMessageBox::critical(this, tr("Fatal Error"), message);
+    QApplication::exit(1);
+}
+
+void MainWindow::onRecentDirAdded(const QString& path)
+{
+    // Add directory to recent list in application settings
+    QT_UI::SettingsManager::instance().application()->addRecentRomDirectory(path);
+    // Refresh menus to show the new recent directory
+    onMenuRefreshNeeded();
+}
+
+void MainWindow::onRecentRomAdded(const QString& path)
+{
+    // Add ROM to recent list in application settings
+    QT_UI::SettingsManager::instance().application()->addRecentRom(path);
+    // Refresh menus to show the new recent ROM
+    onMenuRefreshNeeded();
+}
+
+void MainWindow::onMenuRefreshNeeded()
+{
+    // Recreate the menu bar to update recent items
+    createMenuBar();
+}
+
+void MainWindow::onRomBrowserVisibilityChanged(bool visible)
+{
+    if (romBrowserWidget && centralStackedWidget) {
+        if (visible) {
+            centralStackedWidget->setCurrentWidget(romBrowserWidget);
+        } else if (emulationViewport) {
+            centralStackedWidget->setCurrentWidget(emulationViewport);
+        }
+    }
+}
+
+void MainWindow::onWindowBroughtToTop()
+{
+    // Bring window to front
+    activateWindow();
+    raise();
+}
+
+void MainWindow::onFullScreenChanged(bool fullScreen)
+{
+    if (fullScreen != isFullScreen()) {
+        if (fullScreen) {
+            showFullScreen();
+        } else {
+            showNormal();
+        }
+    }
+}
+
+void MainWindow::onCaptionChanged(const QString& caption)
+{
+    setWindowTitle(caption);
+}
+
+void MainWindow::onStatusBarVisibilityChanged(bool visible)
+{
+    statusBar()->setVisible(visible);
 }

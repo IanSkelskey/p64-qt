@@ -3,9 +3,39 @@
 #include <QObject>
 #include <QString>
 
+// Forward declarations
+class MainWindow;
+
 namespace QT_UI {
 
-class MainWindow;
+/**
+ * @brief Base notification interface
+ *
+ * Abstract interface for the notification system. Implemented by the Qt notification system.
+ */
+class CNotification {
+public:
+    virtual ~CNotification() = default;
+
+    // Interface methods to be implemented
+    virtual void DisplayError(const char* message) const = 0;
+    virtual void DisplayWarning(const char* message) const = 0;
+    virtual void DisplayMessage(const char* message, unsigned int timeout) const = 0;
+    virtual void DisplayMessage2(const char* message) const = 0;
+    
+    virtual void FatalError(const char* message) const = 0;
+    virtual void AddRecentDir(const char* path) = 0;
+    virtual void AddRecentRom(const char* path) = 0;
+    virtual void RefreshMenu(void) = 0;
+    virtual void HideRomBrowser(void) = 0;
+    virtual void ShowRomBrowser(void) = 0;
+    virtual void BringToTop(void) = 0;
+    virtual void ChangeFullScreen(void) const = 0;
+    virtual void ExitFullScreen(void) const = 0;
+    virtual void SetWindowCaption(const char* caption) const = 0;
+    virtual void ShowStatusBar(bool ShowBar) const = 0;
+    virtual void ProcessMessages(void) const = 0;
+};
 
 /**
  * @brief Qt implementation of the notification system

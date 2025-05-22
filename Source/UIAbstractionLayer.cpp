@@ -1,5 +1,5 @@
-#include "UIAbstractionLayer.h"
-#include "Core/Settings/SettingsManager.h"
+#include <UIAbstractionLayer.h>
+#include <Core/Settings/SettingsManager.h>
 #include <QDebug>
 #include <QFileInfo>
 

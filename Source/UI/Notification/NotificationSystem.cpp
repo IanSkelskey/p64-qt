@@ -1,5 +1,5 @@
 #include "NotificationSystem.h"
-#include <MainWindow.h>
+#include <UI/MainWindow.h>
 #include <QApplication>
 #include <QMessageBox>
 #include <QFileInfo>

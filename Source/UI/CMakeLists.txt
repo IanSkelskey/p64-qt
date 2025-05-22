@@ -53,6 +53,11 @@ set(UI_THEME_SOURCES
     Theme/IconHelper.h
 )
 
+set(UI_NOTIFICATION_SOURCES
+    Notification/NotificationSystem.h
+    Notification/NotificationSystem.cpp
+)
+
 # Combine all UI sources
 set(UI_SOURCES
     ${UI_MAIN_SOURCES}
@@ -63,6 +68,7 @@ set(UI_SOURCES
     ${UI_TOOLS_SOURCES}
     ${UI_ENHANCEMENT_SOURCES}
     ${UI_THEME_SOURCES}
+    ${UI_NOTIFICATION_SOURCES}
 )
 
 # Create a static library from the sources
